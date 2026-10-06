@@ -2,11 +2,13 @@
 const provider = (process.env.LLM_PROVIDER || 'gemini').toLowerCase();
 
 async function post(url, headers, body) {
-  for (let attempt = 1; attempt <= 4; attempt++) {
+  const waits = [0, 5, 15, 30, 60, 90]; // seconds; Google's 503 "high demand" spikes usually clear within minutes
+  for (let attempt = 1; attempt <= waits.length; attempt++) {
     const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
     if (res.ok) return res.json();
-    if ((res.status === 429 || res.status >= 500) && attempt < 4) {
-      await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt));
+    if ((res.status === 429 || res.status >= 500) && attempt < waits.length) {
+      console.warn(`LLM HTTP ${res.status}, retrying in ${waits[attempt]}s (attempt ${attempt}/${waits.length - 1})`);
+      await new Promise((r) => setTimeout(r, waits[attempt] * 1000));
       continue;
     }
     throw new Error(`LLM HTTP ${res.status}: ${(await res.text()).slice(0, 500)}`);
@@ -16,16 +18,14 @@ async function post(url, headers, body) {
 let geminiModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 
 /** Newest non-lite "flash" model this key can use, found via the ListModels API. */
-async function newestFlashModel() {
+async function flashModels() {
   const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY } });
   const { models = [] } = await res.json();
   const ver = (n) => (n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1] * 1;
-  const ok = models
-    .filter((m) => m.supportedGenerationMethods?.includes('generateContent') && /^models\/gemini-[\d.]+-flash$/.test(m.name))
+  return models
+    .filter((m) => m.supportedGenerationMethods?.includes('generateContent') && /^models\/gemini-[\d.]+-flash(-lite)?$/.test(m.name))
     .map((m) => m.name.replace('models/', ''))
-    .sort((a, b) => ver(b) - ver(a));
-  if (!ok.length) throw new Error('No usable Gemini flash model found for this API key');
-  return ok[0];
+    .sort((a, b) => ver(b) - ver(a) || a.length - b.length);
 }
 
 /** Returns { text, sources:[{title,url}] }. `search` enables web grounding (Gemini only). */
@@ -52,15 +52,24 @@ export async function generate({ system, prompt, json = false, search = false, m
       ...(search ? { tools: [{ google_search: {} }] } : {}),
   };
   const call = (m) => post(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, { 'x-goog-api-key': process.env.GEMINI_API_KEY }, body);
-  let data;
-  try {
-    data = await call(geminiModel);
-  } catch (e) {
-    if (!String(e.message).includes('HTTP 404') || process.env.GEMINI_MODEL) throw e;
-    geminiModel = await newestFlashModel();
-    console.warn(`Default model unavailable; falling back to ${geminiModel}`);
-    data = await call(geminiModel);
+  // Try the configured model first; on retired (404) or persistently overloaded (429/5xx) models, walk down the list of flash models.
+  let data, lastErr;
+  const queue = [geminiModel];
+  let loaded = false;
+  while (queue.length) {
+    const m = queue.shift();
+    try {
+      data = await call(m);
+      if (m !== geminiModel) { geminiModel = m; console.warn(`Switched to model ${m}`); }
+      break;
+    } catch (e) {
+      lastErr = e;
+      if (process.env.GEMINI_MODEL || !/HTTP (404|429|5\d\d)/.test(e.message)) throw e;
+      if (!loaded) { loaded = true; queue.push(...(await flashModels()).filter((x) => x !== m).slice(0, 4)); }
+      console.warn(`Model ${m} failed (${e.message.slice(0, 70).replace(/\s+/g, ' ')}); ${queue.length ? 'trying next model' : 'no more models'}`);
+    }
   }
+  if (!data) throw lastErr;
   const cand = data.candidates?.[0];
   const text = (cand?.content?.parts || []).map((p) => p.text || '').join('');
   const sources = [];
