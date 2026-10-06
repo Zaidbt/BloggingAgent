@@ -13,6 +13,21 @@ async function post(url, headers, body) {
   }
 }
 
+let geminiModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+
+/** Newest non-lite "flash" model this key can use, found via the ListModels API. */
+async function newestFlashModel() {
+  const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY } });
+  const { models = [] } = await res.json();
+  const ver = (n) => (n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1] * 1;
+  const ok = models
+    .filter((m) => m.supportedGenerationMethods?.includes('generateContent') && /^models\/gemini-[\d.]+-flash$/.test(m.name))
+    .map((m) => m.name.replace('models/', ''))
+    .sort((a, b) => ver(b) - ver(a));
+  if (!ok.length) throw new Error('No usable Gemini flash model found for this API key');
+  return ok[0];
+}
+
 /** Returns { text, sources:[{title,url}] }. `search` enables web grounding (Gemini only). */
 export async function generate({ system, prompt, json = false, search = false, maxTokens = 8192 }) {
   if (provider === 'anthropic') {
@@ -30,16 +45,22 @@ export async function generate({ system, prompt, json = false, search = false, m
     for (const b of data.content) for (const c of b.citations || []) if (c.url) sources.push({ title: c.title || c.url, url: c.url });
     return { text, sources };
   }
-  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-  const data = await post(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-    { 'x-goog-api-key': process.env.GEMINI_API_KEY },
-    {
+  const body = {
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7, ...(json && !search ? { responseMimeType: 'application/json' } : {}) },
       ...(search ? { tools: [{ google_search: {} }] } : {}),
-    });
+  };
+  const call = (m) => post(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, { 'x-goog-api-key': process.env.GEMINI_API_KEY }, body);
+  let data;
+  try {
+    data = await call(geminiModel);
+  } catch (e) {
+    if (!String(e.message).includes('HTTP 404') || process.env.GEMINI_MODEL) throw e;
+    geminiModel = await newestFlashModel();
+    console.warn(`Default model unavailable; falling back to ${geminiModel}`);
+    data = await call(geminiModel);
+  }
   const cand = data.candidates?.[0];
   const text = (cand?.content?.parts || []).map((p) => p.text || '').join('');
   const sources = [];
