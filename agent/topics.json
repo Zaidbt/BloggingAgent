@@ -1,0 +1,8 @@
+{
+  "queue": [
+    { "topic": "How to build a beginner budget that you will actually follow", "keyword": "beginner budget", "intent": "how-to" },
+    { "topic": "Emergency fund: how much you really need and where to keep it", "keyword": "emergency fund", "intent": "informational" },
+    { "topic": "Index funds vs ETFs: what is the difference for new investors", "keyword": "index funds vs etfs", "intent": "comparison" }
+  ],
+  "done": []
+}

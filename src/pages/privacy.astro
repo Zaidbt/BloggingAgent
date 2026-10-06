@@ -1,0 +1,9 @@
+---
+import Base from '../layouts/Base.astro';
+import { site } from '../lib/site';
+---
+<Base title="Privacy policy" description={`Privacy policy for ${site.name}: what data this site does and does not collect.`} canonicalPath="privacy">
+  <h1>Privacy policy</h1>
+  <p>This site does not use cookies or collect personal data by itself. Hosting providers may keep standard server logs (IP address, user agent) for security and operations. If we add analytics or advertising later, this page will be updated first.</p>
+  <p>Questions: <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.</p>
+</Base>

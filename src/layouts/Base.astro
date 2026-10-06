@@ -1,0 +1,59 @@
+---
+import { site, abs, path } from '../lib/site';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalPath: string;
+  type?: 'website' | 'article';
+  published?: Date;
+  modified?: Date;
+  jsonLd?: object[];
+  noindex?: boolean;
+}
+const { title, description, canonicalPath, type = 'website', published, modified, jsonLd = [], noindex = false } = Astro.props;
+const canonical = abs(canonicalPath);
+const fullTitle = title.includes(site.name) ? title : `${title} | ${site.name}`;
+const graph = [
+  { '@context': 'https://schema.org', '@type': 'WebSite', name: site.name, url: abs(), inLanguage: site.language },
+  ...jsonLd,
+];
+---
+<!doctype html>
+<html lang={site.language}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content={noindex ? 'noindex,follow' : 'index,follow,max-image-preview:large,max-snippet:-1'} />
+    <link rel="sitemap" href={path('sitemap-index.xml')} />
+    <link rel="alternate" type="application/rss+xml" title={site.name} href={path('rss.xml')} />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={site.name} />
+    <meta name="twitter:card" content="summary" />
+    {published && <meta property="article:published_time" content={published.toISOString()} />}
+    {modified && <meta property="article:modified_time" content={modified.toISOString()} />}
+    <script type="application/ld+json" set:html={JSON.stringify(graph)} />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href={path()}>{site.name}</a>
+      <nav aria-label="Main">
+        <a href={path('blog')}>Articles</a>
+        <a href={path('about')}>About</a>
+        <a href={path('rss.xml')}>RSS</a>
+      </nav>
+    </header>
+    <main id="main"><slot /></main>
+    <footer class="site-footer">
+      <p>&copy; {new Date().getFullYear()} {site.name}. <a href={path('about')}>About &amp; AI disclosure</a> · <a href={path('privacy')}>Privacy</a></p>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+---
+import Base from '../layouts/Base.astro';
+import { path } from '../lib/site';
+---
+<Base title="Page not found" description="This page does not exist. Browse our latest articles instead." canonicalPath="404" noindex>
+  <h1>Page not found</h1>
+  <p><a href={path('blog')}>Browse all articles</a></p>
+</Base>

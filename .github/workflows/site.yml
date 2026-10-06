@@ -1,0 +1,61 @@
+name: Publish daily post and deploy
+
+on:
+  schedule:
+    - cron: "17 6 * * *"      # every day 06:17 UTC
+  workflow_dispatch:
+    inputs:
+      skip_agent:
+        description: "Only rebuild/deploy, don't write a post"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths-ignore: ["agent/topics.json"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+
+      - name: Write today's post
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.skip_agent)
+        env:
+          LLM_PROVIDER: ${{ vars.LLM_PROVIDER || 'gemini' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npm run agent
+
+      - name: Commit new post
+        run: |
+          git config user.name "blog-agent"
+          git config user.email "blog-agent@users.noreply.github.com"
+          git add src/content/posts agent/topics.json
+          git diff --cached --quiet || (git commit -m "Daily post $(date -u +%F)" && git push)
+
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: dist }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

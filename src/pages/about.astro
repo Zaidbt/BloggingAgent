@@ -1,0 +1,15 @@
+---
+import Base from '../layouts/Base.astro';
+import { site, abs } from '../lib/site';
+---
+<Base title="About" description={`Who is behind ${site.name}, how articles are researched, and how AI is used.`} canonicalPath="about"
+  jsonLd={[{ '@context': 'https://schema.org', '@type': 'AboutPage', name: 'About', url: abs('about') }]}>
+  <h1>About {site.name}</h1>
+  <p>{site.tagline} We cover {site.niche}, written for {site.audience}.</p>
+  <h2>How we work</h2>
+  <p>{site.author.bio}</p>
+  <h2>AI disclosure</h2>
+  <p>{site.aiDisclosure}</p>
+  <h2>Corrections and contact</h2>
+  <p>Found a mistake? Email <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a> and we will review and fix it.</p>
+</Base>

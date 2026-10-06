@@ -1,0 +1,16 @@
+{
+  "name": "My Niche Blog",
+  "tagline": "Practical, researched guides you can actually use.",
+  "url": "https://zaidbt.github.io",
+  "base": "/BloggingAgent",
+  "language": "en",
+  "niche": "personal finance for beginners",
+  "audience": "adults in their 20s and 30s who are new to budgeting, saving and investing",
+  "tone": "clear, friendly, honest, concrete; no hype, no filler",
+  "author": {
+    "name": "Editorial Team",
+    "bio": "We research every topic from primary sources, explain it in plain language, and update posts when facts change."
+  },
+  "aiDisclosure": "Articles are drafted with AI assistance from web research and published under automated quality checks. We correct errors when readers report them.",
+  "contactEmail": "hello@example.com"
+}
