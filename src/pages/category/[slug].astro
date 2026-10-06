@@ -1,0 +1,23 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import { site, abs, catLabel } from '../../lib/site';
+
+export async function getStaticPaths() {
+  const posts = (await getCollection('posts')).sort((a, b) => +b.data.date - +a.data.date);
+  return site.categories
+    .filter((c) => posts.some((p) => p.data.category === c.slug))
+    .map((c) => ({ params: { slug: c.slug }, props: { posts: posts.filter((p) => p.data.category === c.slug) } }));
+}
+const { slug } = Astro.params;
+const { posts } = Astro.props;
+const label = catLabel(slug!);
+---
+<Base title={`أخبار ${label} في المغرب`} description={`آخر مقالات قسم ${label} على ${site.name}: أخبار وتحليلات عن المغرب بمصادر موثوقة.`} canonicalPath={`category/${slug}`}
+  jsonLd={[{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: label, url: abs(`category/${slug}`) }]}>
+  <div class="wrap">
+    <h1 class="page-title">{label}</h1>
+    <div class="grid">{posts.map((p) => <PostCard post={p} />)}</div>
+  </div>
+</Base>

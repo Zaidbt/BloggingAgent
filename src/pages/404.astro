@@ -2,7 +2,6 @@
 import Base from '../layouts/Base.astro';
 import { path } from '../lib/site';
 ---
-<Base title="Page not found" description="This page does not exist. Browse our latest articles instead." canonicalPath="404" noindex>
-  <h1>Page not found</h1>
-  <p><a href={path('blog')}>Browse all articles</a></p>
+<Base title="الصفحة غير موجودة" description="هذه الصفحة غير موجودة. تصفّح أحدث المقالات." canonicalPath="404" noindex>
+  <div class="wrap narrow page"><h1 class="page-title">الصفحة غير موجودة</h1><p><a class="btn" href={path()}>العودة إلى الرئيسية</a></p></div>
 </Base>

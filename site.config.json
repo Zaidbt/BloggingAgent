@@ -1,16 +1,26 @@
 {
-  "name": "My Niche Blog",
-  "tagline": "Practical, researched guides you can actually use.",
+  "name": "نبض المغرب",
+  "tagline": "أبرز ما يتصدر الأخبار في المغرب، مشروحاً بوضوح وبمصادر",
   "url": "https://zaidbt.github.io",
   "base": "/BloggingAgent",
-  "language": "en",
-  "niche": "personal finance for beginners",
-  "audience": "adults in their 20s and 30s who are new to budgeting, saving and investing",
-  "tone": "clear, friendly, honest, concrete; no hype, no filler",
+  "language": "ar",
+  "locale": "ar-MA",
+  "country": "Morocco",
+  "niche": "trending news in Morocco",
+  "categories": [
+    { "slug": "politics", "label": "سياسة" },
+    { "slug": "economy", "label": "اقتصاد" },
+    { "slug": "society", "label": "مجتمع" },
+    { "slug": "sport", "label": "رياضة" },
+    { "slug": "culture", "label": "ثقافة وفن" },
+    { "slug": "tech", "label": "تكنولوجيا" },
+    { "slug": "health", "label": "صحة" },
+    { "slug": "world", "label": "العالم" }
+  ],
   "author": {
-    "name": "Editorial Team",
-    "bio": "We research every topic from primary sources, explain it in plain language, and update posts when facts change."
+    "name": "هيئة التحرير",
+    "bio": "نتابع ما يشغل المغاربة يومياً، ونعتمد على مصادر موثوقة نذكرها في كل مقال، ونصحح أي خطأ فور التنبيه إليه."
   },
-  "aiDisclosure": "Articles are drafted with AI assistance from web research and published under automated quality checks. We correct errors when readers report them.",
+  "aiDisclosure": "تُعدّ مقالاتنا بمساعدة الذكاء الاصطناعي انطلاقاً من مصادر إخبارية منشورة، وتخضع لفحوص جودة آلية قبل النشر. نحن لا ننقل الأخبار حرفياً، بل نلخصها ونشرحها وننسب كل معلومة إلى مصدرها. إذا لاحظتم خطأ فراسلونا ليُصحَّح.",
   "contactEmail": "hello@example.com"
 }

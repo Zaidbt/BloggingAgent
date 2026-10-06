@@ -1,27 +1,32 @@
-export const slugify = (s) =>
-  s.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/[\s_]+/g, '-').slice(0, 80).replace(/-+$/, '');
+export const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 
 const words = (s) => s.split(/\s+/).filter(Boolean).length;
+const arabicRatio = (s) => {
+  const letters = s.match(/\p{L}/gu) || [];
+  return letters.length ? (s.match(/\p{Script=Arabic}/gu) || []).length / letters.length : 0;
+};
 
-/** Returns a list of human-readable problems; empty list = publishable. */
-export function validate(post, existing, topic) {
+/** Returns human-readable problems; an empty list means the post is publishable. */
+export function validate(post, existing, { categories }) {
   const p = [];
   const body = post.body || '';
-  if (!post.title || post.title.length > 65) p.push(`title must be <= 65 chars (got ${post.title?.length})`);
-  if (!post.description || post.description.length < 100 || post.description.length > 165) p.push(`description must be 100-165 chars (got ${post.description?.length})`);
-  if (words(body) < 1000) p.push(`body too short: ${words(body)} words, need >= 1000`);
+  if (!post.title || post.title.length > 85) p.push(`title must be <= 85 chars (got ${post.title?.length})`);
+  if (!post.description || post.description.length < 90 || post.description.length > 200) p.push(`description must be 90-200 chars (got ${post.description?.length})`);
+  if (words(body) < 450) p.push(`body too short: ${words(body)} words, need >= 450`);
+  if (words(body) > 1500) p.push(`body too long: ${words(body)} words, keep it under 1500`);
+  if (arabicRatio(body) < 0.8) p.push('body must be written in Arabic');
+  if (arabicRatio(post.title || '') < 0.8) p.push('title must be in Arabic');
   if (/^#\s/m.test(body)) p.push('body must not contain an H1');
-  if ((body.match(/^##\s/gm) || []).length < 4) p.push('need at least 4 H2 sections');
-  if (!post.category) p.push('missing category');
-  if ((post.faq || []).length < 3) p.push('need at least 3 FAQ items');
-  if (topic?.keyword && !body.toLowerCase().includes(topic.keyword.toLowerCase().split(' ')[0])) p.push('primary keyword missing from body');
-  if (/as an ai|i cannot browse|\[insert|lorem ipsum|TODO/i.test(body)) p.push('contains placeholder or AI-meta text');
-  if (/in my (own )?experience|when i (tried|tested)|i personally/i.test(body)) p.push('contains fabricated first-person experience');
-  // internal links must resolve to existing posts
+  if ((body.match(/^##\s/gm) || []).length < 3) p.push('need at least 3 H2 sections');
+  if (!categories.includes(post.category)) p.push(`category must be one of: ${categories.join(', ')}`);
+  if (!/^[a-z0-9]+(-[a-z0-9]+){1,}$/.test(post.slug || '') || post.slug.length > 80) p.push('slug must be 2+ lowercase english words joined by hyphens');
+  if (!post.imageAlt) p.push('missing imageAlt (Arabic description of an illustrative image)');
+  if ((post.faq || []).length < 2) p.push('need at least 2 FAQ items');
+  if ((post.sources || []).length < 2) p.push('not enough grounded sources (need >= 2)');
+  if (/as an ai|i cannot|\[insert|lorem ipsum|TODO|كنموذج لغوي/i.test(body)) p.push('contains placeholder or AI-meta text');
   const slugs = new Set(existing.map((e) => e.slug));
   for (const m of body.matchAll(/\]\((?:\/[^)\s]*?)?\/blog\/([^/)\s]+)\/?\)/g)) if (!slugs.has(m[1])) p.push(`broken internal link to unknown post "${m[1]}"; remove it`);
-  // near-duplicate title guard
-  const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+  const norm = (s) => s.replace(/[^\p{L}\p{N} ]/gu, '').trim();
   if (existing.some((e) => norm(e.title) === norm(post.title))) p.push('title duplicates an existing post');
   return p;
 }

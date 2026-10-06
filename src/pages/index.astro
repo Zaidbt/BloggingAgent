@@ -1,22 +1,35 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import PostCard from '../components/PostCard.astro';
 import { site, path, abs } from '../lib/site';
+
 const posts = (await getCollection('posts')).sort((a, b) => +b.data.date - +a.data.date);
-const cats = [...new Set(posts.map((p) => p.data.category))];
+const [lead, ...rest] = posts;
+const side = rest.slice(0, 3);
+const grid = rest.slice(3, 15);
 ---
-<Base title={`${site.name} — ${site.tagline}`} description={site.tagline + ` Guides on ${site.niche}.`} canonicalPath=""
-  jsonLd={[{ '@context': 'https://schema.org', '@type': 'Blog', name: site.name, url: abs(), description: site.tagline }]}>
-  <h1>{site.name}</h1>
-  <p>{site.tagline}</p>
-  {cats.length > 0 && <p>{cats.map((c) => <span class="tag">{c}</span>)}</p>}
-  <h2>Latest articles</h2>
-  <ul class="post-list">
-    {posts.slice(0, 15).map((p) => (
-      <li><h2><a href={path(`blog/${p.id}`)}>{p.data.title}</a></h2>
-        <p class="meta">{p.data.date.toISOString().slice(0, 10)} · {p.data.category}</p>
-        <p>{p.data.description}</p></li>
-    ))}
-  </ul>
-  <p><a href={path('blog')}>See all articles →</a></p>
+<Base title={`${site.name} — ${site.tagline}`} description={site.tagline} canonicalPath=""
+  jsonLd={[{ '@context': 'https://schema.org', '@type': 'Blog', name: site.name, url: abs(), inLanguage: 'ar' }]}>
+  <div class="wrap">
+    {!lead && <p class="empty">لا توجد مقالات بعد. سيظهر أول خبر هنا فور تشغيل الوكيل.</p>}
+    {lead && (
+      <section class="lead-grid">
+        <PostCard post={lead} variant="hero" eager />
+        {side.length > 0 && (
+          <aside class="side" aria-label="أخبار أخرى">
+            <h2 class="section-title">أيضاً في الأخبار</h2>
+            {side.map((p) => <PostCard post={p} variant="row" />)}
+          </aside>
+        )}
+      </section>
+    )}
+    {grid.length > 0 && (
+      <section>
+        <h2 class="section-title">آخر المقالات</h2>
+        <div class="grid">{grid.map((p) => <PostCard post={p} />)}</div>
+        <p class="more"><a class="btn" href={path('blog')}>عرض كل المقالات</a></p>
+      </section>
+    )}
+  </div>
 </Base>

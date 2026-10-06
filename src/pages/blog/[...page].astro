@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import { path, abs } from '../../lib/site';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const posts = (await getCollection('posts')).sort((a, b) => +b.data.date - +a.data.date);
+  return paginate(posts, { pageSize: 18 });
+}) satisfies GetStaticPaths;
+const { page } = Astro.props;
+const cp = page.currentPage === 1 ? 'blog' : `blog/${page.currentPage}`;
+---
+<Base title={page.currentPage === 1 ? 'أرشيف المقالات' : `أرشيف المقالات - الصفحة ${page.currentPage}`} description="كل مقالاتنا الإخبارية عن المغرب مرتبة من الأحدث إلى الأقدم." canonicalPath={cp}
+  jsonLd={[{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'أرشيف المقالات', url: abs(cp) }]}>
+  <div class="wrap">
+    <h1 class="page-title">أرشيف المقالات</h1>
+    <div class="grid">{page.data.map((p) => <PostCard post={p} />)}</div>
+    <nav class="pager" aria-label="الصفحات">
+      {page.url.prev && <a class="btn" href={page.url.prev}>→ الأحدث</a>}
+      {page.url.next && <a class="btn" href={page.url.next}>الأقدم ←</a>}
+    </nav>
+  </div>
+</Base>

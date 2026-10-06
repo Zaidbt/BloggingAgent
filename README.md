@@ -1,21 +1,19 @@
-# BloggingAgent
+# نبض المغرب — automated Arabic news blog
 
-A fully automated, free, SEO-optimized blog: an Astro static site plus a daily AI writing agent, run by GitHub Actions and hosted on GitHub Pages.
+An Arabic (RTL) Moroccan news site built with Astro, plus a daily AI agent. Free to run: GitHub Actions + GitHub Pages + Gemini free tier.
 
 ## How it works
-1. `.github/workflows/site.yml` runs daily (cron) → `agent/run.mjs`.
-2. The agent picks a topic from `agent/topics.json` (auto-refills with fresh long-tail ideas, avoiding overlap with existing posts), does web-grounded research, writes the article, and runs quality checks (`agent/quality.mjs`) with up to 3 retries. If checks fail, nothing is published.
-3. The post is committed to `src/content/posts/`, the site is rebuilt and deployed.
+1. `.github/workflows/site.yml` runs daily (06:17 UTC) and calls `agent/run.mjs`.
+2. The agent uses Google Search grounding to find what is trending in Morocco, picks a story it hasn't covered, researches it across several outlets, and writes an original Arabic article that attributes every claim.
+3. `agent/quality.mjs` checks the result: Arabic, length, headings, FAQ, at least 2 grounded sources, valid category and slug, no broken links, no duplicate title. It allows up to 3 rewrites per story, then moves to the next candidate. If nothing passes, nothing is published.
+4. A cover image is added: a free Pexels photo (if `PEXELS_API_KEY` is set) or a generated Moroccan zellige-pattern cover. Astro optimizes it to responsive WebP and builds the social-share image.
+5. The post is committed, and the site is rebuilt and deployed.
 
-## SEO built in
-Canonical URLs, sitemap, robots.txt, RSS, `llms.txt`, JSON-LD (BlogPosting, BreadcrumbList, FAQPage, WebSite), OG/Twitter tags, semantic HTML, TOC, related posts, author/about/privacy pages, AI disclosure, cited sources, zero JS, inlined CSS (excellent Core Web Vitals).
+## SEO
+NewsArticle, Breadcrumb, FAQ and Organization JSON-LD; canonical URLs; `lang="ar"`; sitemap; RSS; robots; `llms.txt`; Open Graph/Twitter images; category pages; related posts; sources section; About, Privacy and AI-disclosure pages.
 
-## Setup (5 minutes)
-1. Edit `site.config.json`: name, niche, audience, `url` (`https://<user>.github.io`) and `base` (`/BloggingAgent`; use `""` with a custom domain).
-2. Get a free key at https://aistudio.google.com/apikey and add it as repo secret `GEMINI_API_KEY`
-   (or set variable `LLM_PROVIDER=anthropic` and secret `ANTHROPIC_API_KEY`).
-3. Repo Settings → Pages → Source: **GitHub Actions**.
-4. Run the workflow once via Actions → "Publish daily post and deploy" → Run workflow.
-5. Add the site to Google Search Console and submit `sitemap-index.xml`.
-
-Local: `npm install && npm run dev`; `GEMINI_API_KEY=... npm run agent:dry` previews a post without saving.
+## Setup
+- Secrets (Settings → Secrets → Actions): `GEMINI_API_KEY` (required, https://aistudio.google.com/apikey) and `PEXELS_API_KEY` (optional, free, https://www.pexels.com/api/).
+- Optional: variable `LLM_PROVIDER=anthropic` plus secret `ANTHROPIC_API_KEY` to write with Claude (paid).
+- Edit `site.config.json` for name, tagline, categories, contact email and URL.
+- Local: `npm install && npm run dev`; `GEMINI_API_KEY=... npm run agent:dry` previews an article.

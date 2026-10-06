@@ -2,14 +2,22 @@
 import Base from '../layouts/Base.astro';
 import { site, abs } from '../lib/site';
 ---
-<Base title="About" description={`Who is behind ${site.name}, how articles are researched, and how AI is used.`} canonicalPath="about"
-  jsonLd={[{ '@context': 'https://schema.org', '@type': 'AboutPage', name: 'About', url: abs('about') }]}>
-  <h1>About {site.name}</h1>
-  <p>{site.tagline} We cover {site.niche}, written for {site.audience}.</p>
-  <h2>How we work</h2>
-  <p>{site.author.bio}</p>
-  <h2>AI disclosure</h2>
-  <p>{site.aiDisclosure}</p>
-  <h2>Corrections and contact</h2>
-  <p>Found a mistake? Email <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a> and we will review and fix it.</p>
+<Base title="من نحن وسياستنا التحريرية" description={`تعرّف على ${site.name}: كيف نختار الأخبار، وكيف نتحقق منها، وكيف نستخدم الذكاء الاصطناعي بشفافية.`} canonicalPath="about"
+  jsonLd={[{ '@context': 'https://schema.org', '@type': 'AboutPage', name: 'من نحن', url: abs('about') }]}>
+  <div class="wrap narrow prose page">
+    <h1 class="page-title">من نحن</h1>
+    <p>{site.name} موقع إخباري باللغة العربية يتابع ما يتصدر اهتمام المغاربة كل يوم، ويشرحه بلغة واضحة مع ذكر المصادر.</p>
+    <h2>كيف نعمل</h2>
+    <ul>
+      <li>نرصد يومياً أبرز الأخبار المتداولة في المغرب من مصادر إعلامية موثوقة.</li>
+      <li>نلخص الوقائع ونضعها في سياقها دون نقل حرفي، وننسب كل معلومة إلى مصدرها.</li>
+      <li>لا ننشر شائعات ولا اتهامات غير مثبتة، ونحترم قرينة البراءة وخصوصية الأفراد.</li>
+      <li>نذكر مصادر كل مقال في نهايته، ونحدّث المقال عند ظهور معطيات جديدة.</li>
+    </ul>
+    <h2>الذكاء الاصطناعي</h2>
+    <p>{site.aiDisclosure}</p>
+    <h2>التصحيحات والتواصل</h2>
+    <p>وجدتم خطأ أو لديكم معلومة إضافية؟ راسلونا على <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a> وسنراجع الأمر ونصحح عند الحاجة.</p>
+    <p class="meta">{site.author.bio}</p>
+  </div>
 </Base>

@@ -1,0 +1,38 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import { path, catLabel, fmtDate, readingTime } from '../lib/site';
+
+interface Props { post: CollectionEntry<'posts'>; variant?: 'hero' | 'card' | 'row'; eager?: boolean }
+const { post, variant = 'card', eager = false } = Astro.props;
+const d = post.data;
+const href = path(`blog/${post.id}`);
+---
+{variant === 'hero' && (
+  <a class="hero" href={href}>
+    <Image src={d.image} alt={d.imageAlt} widths={[800, 1200, 1600]} sizes="(min-width: 64rem) 46rem, 100vw" loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : 'auto'} />
+    <div class="hero-text">
+      <span class="chip">{catLabel(d.category)}</span>
+      <h2>{d.title}</h2>
+      <p>{d.description}</p>
+      <span class="meta">{fmtDate(d.date)} · {readingTime(post.body ?? '')} د للقراءة</span>
+    </div>
+  </a>
+)}
+{variant === 'card' && (
+  <a class="card" href={href}>
+    <div class="thumb">
+      <Image src={d.image} alt={d.imageAlt} widths={[400, 600, 900]} sizes="(min-width: 64rem) 22rem, (min-width: 40rem) 50vw, 100vw" loading={eager ? 'eager' : 'lazy'} />
+      <span class="chip">{catLabel(d.category)}</span>
+    </div>
+    <h3>{d.title}</h3>
+    <p>{d.description}</p>
+    <span class="meta">{fmtDate(d.date)}</span>
+  </a>
+)}
+{variant === 'row' && (
+  <a class="row" href={href}>
+    <Image src={d.image} alt={d.imageAlt} widths={[160, 320]} sizes="6rem" loading="lazy" />
+    <div><span class="chip chip-plain">{catLabel(d.category)}</span><h3>{d.title}</h3><span class="meta">{fmtDate(d.date)}</span></div>
+  </a>
+)}

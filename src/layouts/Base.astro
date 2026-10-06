@@ -1,5 +1,6 @@
 ---
-import { site, abs, path } from '../lib/site';
+import { getCollection } from 'astro:content';
+import { site, abs, path, fmtDate, catLabel } from '../lib/site';
 import '../styles/global.css';
 
 interface Props {
@@ -9,51 +10,88 @@ interface Props {
   type?: 'website' | 'article';
   published?: Date;
   modified?: Date;
+  image?: string;
   jsonLd?: object[];
   noindex?: boolean;
 }
-const { title, description, canonicalPath, type = 'website', published, modified, jsonLd = [], noindex = false } = Astro.props;
+const { title, description, canonicalPath, type = 'website', published, modified, image, jsonLd = [], noindex = false } = Astro.props;
 const canonical = abs(canonicalPath);
 const fullTitle = title.includes(site.name) ? title : `${title} | ${site.name}`;
+const posts = await getCollection('posts');
+const usedCats = site.categories.filter((c) => posts.some((p) => p.data.category === c.slug));
 const graph = [
   { '@context': 'https://schema.org', '@type': 'WebSite', name: site.name, url: abs(), inLanguage: site.language },
+  { '@context': 'https://schema.org', '@type': 'NewsMediaOrganization', name: site.name, url: abs(), logo: { '@type': 'ImageObject', url: abs('favicon.svg') } },
   ...jsonLd,
 ];
+const ogImage = image ? new URL(image, site.url).href : undefined;
 ---
 <!doctype html>
-<html lang={site.language}>
+<html lang={site.language} dir="rtl">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <meta name="robots" content={noindex ? 'noindex,follow' : 'index,follow,max-image-preview:large,max-snippet:-1'} />
+    <meta name="robots" content={noindex ? 'noindex,follow' : 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'} />
+    <meta name="theme-color" content="#c1272d" />
+    <link rel="icon" href={path('favicon.svg')} type="image/svg+xml" />
     <link rel="sitemap" href={path('sitemap-index.xml')} />
     <link rel="alternate" type="application/rss+xml" title={site.name} href={path('rss.xml')} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet" />
     <meta property="og:type" content={type} />
+    <meta property="og:locale" content="ar_MA" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={site.name} />
-    <meta name="twitter:card" content="summary" />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
     {published && <meta property="article:published_time" content={published.toISOString()} />}
     {modified && <meta property="article:modified_time" content={modified.toISOString()} />}
     <script type="application/ld+json" set:html={JSON.stringify(graph)} />
   </head>
   <body>
-    <a class="skip" href="#main">Skip to content</a>
+    <a class="skip" href="#main">تخطَّ إلى المحتوى</a>
+    <div class="topbar"><div class="wrap"><span>{fmtDate(new Date())}</span><span class="topbar-note">أخبار المغرب أولاً بأول</span></div></div>
     <header class="site-header">
-      <a class="brand" href={path()}>{site.name}</a>
-      <nav aria-label="Main">
-        <a href={path('blog')}>Articles</a>
-        <a href={path('about')}>About</a>
-        <a href={path('rss.xml')}>RSS</a>
-      </nav>
+      <div class="wrap header-row">
+        <a class="brand" href={path()} aria-label={site.name}>
+          <svg viewBox="0 0 64 64" width="38" height="38" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#c1272d"/><path d="M32 8l6.500 14.600L53 18l-4.600 14.500L56 32l-7.600 3.500L53 50l-14.500-4.600L32 56l-6.500-10.600L11 50l4.600-14.500L8 32l7.600-.500L11 18l14.500 4.600z" fill="#fff"/><circle cx="32" cy="32" r="7" fill="#006233"/></svg>
+          <span>{site.name}</span>
+        </a>
+        <nav class="cats" aria-label="الأقسام">
+          <a href={path()}>الرئيسية</a>
+          {usedCats.map((c) => <a href={path(`category/${c.slug}`)}>{c.label}</a>)}
+          <a href={path('blog')}>الأرشيف</a>
+        </nav>
+      </div>
     </header>
     <main id="main"><slot /></main>
     <footer class="site-footer">
-      <p>&copy; {new Date().getFullYear()} {site.name}. <a href={path('about')}>About &amp; AI disclosure</a> · <a href={path('privacy')}>Privacy</a></p>
+      <div class="wrap footer-grid">
+        <div>
+          <p class="footer-brand">{site.name}</p>
+          <p>{site.tagline}</p>
+        </div>
+        <div>
+          <p class="footer-title">الأقسام</p>
+          <ul>{usedCats.map((c) => <li><a href={path(`category/${c.slug}`)}>{c.label}</a></li>)}</ul>
+        </div>
+        <div>
+          <p class="footer-title">عن الموقع</p>
+          <ul>
+            <li><a href={path('about')}>من نحن وسياستنا التحريرية</a></li>
+            <li><a href={path('privacy')}>سياسة الخصوصية</a></li>
+            <li><a href={path('rss.xml')}>RSS</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="wrap footer-bottom">© {new Date().getFullYear()} {site.name}. محتوى مُعدّ بمساعدة الذكاء الاصطناعي ومنسوب إلى مصادره.</div>
     </footer>
   </body>
 </html>

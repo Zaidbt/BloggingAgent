@@ -1,0 +1,131 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Image, getImage } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import { site, abs, path, fmtDate, readingTime, catLabel } from '../../lib/site';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post, all: posts } }));
+}
+const { post, all } = Astro.props;
+const { Content, headings } = await render(post);
+const d = post.data;
+const url = `blog/${post.id}`;
+const toc = headings.filter((h) => h.depth === 2);
+const related = all
+  .filter((p) => p.id !== post.id)
+  .map((p) => ({ p, score: p.data.tags.filter((t) => d.tags.includes(t)).length * 2 + (p.data.category === d.category ? 1 : 0) }))
+  .filter((x) => x.score > 0)
+  .sort((a, b) => b.score - a.score || +b.p.data.date - +a.p.data.date)
+  .slice(0, 3)
+  .map((x) => x.p);
+
+const og = await getImage({ src: d.image, width: 1200, height: 630, fit: 'cover', format: 'jpg' });
+const full = await getImage({ src: d.image, width: 1600, format: 'jpg' });
+const shareUrl = encodeURIComponent(abs(url));
+const shareText = encodeURIComponent(d.title);
+
+const jsonLd: object[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: d.title,
+    description: d.description,
+    image: [new URL(og.src, site.url).href, new URL(full.src, site.url).href],
+    datePublished: d.date.toISOString(),
+    dateModified: (d.updated ?? d.date).toISOString(),
+    mainEntityOfPage: abs(url),
+    inLanguage: site.language,
+    wordCount: (post.body ?? '').split(/\s+/).length,
+    keywords: d.tags.join(', '),
+    articleSection: catLabel(d.category),
+    author: { '@type': 'Organization', name: site.author.name, url: abs('about') },
+    publisher: { '@type': 'NewsMediaOrganization', name: site.name, url: abs(), logo: { '@type': 'ImageObject', url: abs('favicon.svg') } },
+    isBasedOn: d.sources.map((s) => s.url),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'الرئيسية', item: abs() },
+      { '@type': 'ListItem', position: 2, name: catLabel(d.category), item: abs(`category/${d.category}`) },
+      { '@type': 'ListItem', position: 3, name: d.title, item: abs(url) },
+    ],
+  },
+];
+if (d.faq.length) {
+  jsonLd.push({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: d.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  });
+}
+---
+<Base title={d.title} description={d.description} canonicalPath={url} type="article" published={d.date} modified={d.updated ?? d.date} image={og.src} jsonLd={jsonLd}>
+  <div class="wrap article-wrap">
+    <nav class="breadcrumbs" aria-label="مسار التصفح">
+      <a href={path()}>الرئيسية</a> ‹ <a href={path(`category/${d.category}`)}>{catLabel(d.category)}</a>
+    </nav>
+    <article>
+      <header class="article-head">
+        <a class="chip" href={path(`category/${d.category}`)}>{catLabel(d.category)}</a>
+        <h1>{d.title}</h1>
+        <p class="lede">{d.description}</p>
+        <p class="meta">
+          <a href={path('about')}>{site.author.name}</a> ·
+          <time datetime={d.date.toISOString()}>{fmtDate(d.date)}</time>
+          {d.updated && <> · تحديث <time datetime={d.updated.toISOString()}>{fmtDate(d.updated)}</time></>}
+          · {readingTime(post.body ?? '')} د للقراءة
+        </p>
+      </header>
+      <figure class="article-hero">
+        <Image src={d.image} alt={d.imageAlt} widths={[640, 960, 1280, 1600]} sizes="(min-width: 64rem) 60rem, 100vw" loading="eager" fetchpriority="high" />
+        <figcaption>
+          صورة توضيحية — {d.imageAlt}
+          {d.imageCredit && <> · <a href={d.imageCredit.url} rel="noopener nofollow">{d.imageCredit.name} / {d.imageCredit.source}</a></>}
+        </figcaption>
+      </figure>
+      <div class="article-cols">
+        <div class="prose">
+          {toc.length > 3 && (
+            <nav class="toc" aria-label="محتويات المقال">
+              <strong>في هذا المقال</strong>
+              <ul>{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ul>
+            </nav>
+          )}
+          <Content />
+          {d.faq.length > 0 && (
+            <section>
+              <h2 id="faq">أسئلة شائعة</h2>
+              {d.faq.map((f) => <details><summary>{f.q}</summary><p>{f.a}</p></details>)}
+            </section>
+          )}
+          {d.sources.length > 0 && (
+            <section class="box sources">
+              <h2 id="sources">المصادر</h2>
+              <ul>{d.sources.map((s) => <li><a href={s.url} rel="noopener nofollow" target="_blank">{s.title}</a></li>)}</ul>
+            </section>
+          )}
+          <aside class="box author-box">
+            <p><strong>{site.author.name}</strong> — {site.author.bio}</p>
+            <p class="meta">{site.aiDisclosure}</p>
+          </aside>
+        </div>
+        <aside class="share" aria-label="مشاركة">
+          <span>شارك</span>
+          <a class="share-wa" href={`https://wa.me/?text=${shareText}%20${shareUrl}`} rel="noopener" target="_blank">واتساب</a>
+          <a href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`} rel="noopener" target="_blank">فيسبوك</a>
+          <a href={`https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`} rel="noopener" target="_blank">إكس</a>
+        </aside>
+      </div>
+    </article>
+    {related.length > 0 && (
+      <section>
+        <h2 class="section-title">قد يهمك أيضاً</h2>
+        <div class="grid">{related.map((r) => <PostCard post={r} />)}</div>
+      </section>
+    )}
+  </div>
+</Base>

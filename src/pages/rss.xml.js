@@ -8,6 +8,7 @@ export async function GET(context) {
     title: site.name,
     description: site.tagline,
     site: context.site,
-    items: posts.map((p) => ({ title: p.data.title, description: p.data.description, pubDate: p.data.date, link: path(`blog/${p.id}`) })),
+    customData: '<language>ar-ma</language>',
+    items: posts.map((p) => ({ title: p.data.title, description: p.data.description, pubDate: p.data.date, link: path(`blog/${p.id}`), categories: [p.data.category, ...p.data.tags] })),
   });
 }
