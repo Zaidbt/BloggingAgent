@@ -8,19 +8,60 @@
   "country": "Morocco",
   "niche": "trending news in Morocco",
   "categories": [
-    { "slug": "politics", "label": "سياسة" },
-    { "slug": "economy", "label": "اقتصاد" },
-    { "slug": "society", "label": "مجتمع" },
-    { "slug": "sport", "label": "رياضة" },
-    { "slug": "culture", "label": "ثقافة وفن" },
-    { "slug": "tech", "label": "تكنولوجيا" },
-    { "slug": "health", "label": "صحة" },
-    { "slug": "world", "label": "العالم" }
+    {
+      "slug": "politics",
+      "label": "سياسة"
+    },
+    {
+      "slug": "economy",
+      "label": "اقتصاد"
+    },
+    {
+      "slug": "society",
+      "label": "مجتمع"
+    },
+    {
+      "slug": "sport",
+      "label": "رياضة"
+    },
+    {
+      "slug": "culture",
+      "label": "ثقافة وفن"
+    },
+    {
+      "slug": "tech",
+      "label": "تكنولوجيا"
+    },
+    {
+      "slug": "health",
+      "label": "صحة"
+    },
+    {
+      "slug": "world",
+      "label": "العالم"
+    }
   ],
   "author": {
     "name": "هيئة التحرير",
     "bio": "نتابع ما يشغل المغاربة يومياً، ونعتمد على مصادر موثوقة نذكرها في كل مقال، ونصحح أي خطأ فور التنبيه إليه."
   },
   "aiDisclosure": "تُعدّ مقالاتنا بمساعدة الذكاء الاصطناعي انطلاقاً من مصادر إخبارية منشورة، وتخضع لفحوص جودة آلية قبل النشر. نحن لا ننقل الأخبار حرفياً، بل نلخصها ونشرحها وننسب كل معلومة إلى مصدرها. إذا لاحظتم خطأ فراسلونا ليُصحَّح.",
-  "contactEmail": "hello@example.com"
+  "contactEmail": "hello@example.com",
+  "feeds": [
+    "https://www.hespress.com/feed",
+    "https://www.alyaoum24.com/feed",
+    "https://www.hibapress.com/feed",
+    "https://www.akhbarona.com/feed",
+    "https://www.goud.ma/feed",
+    "https://www.barlamane.com/feed",
+    "https://www.lakome2.com/feed",
+    "https://www.assahifa.com/feed",
+    "https://www.febrayer.com/feed",
+    "https://www.chamaly.com/feed",
+    "https://ar.le360.ma/rss",
+    "https://www.maroc-hebdo.press.ma/feed",
+    "https://www.alaoual.com/feed",
+    "https://www.almaghribtoday.net/feed",
+    "https://www.tanja24.com/feed"
+  ]
 }
