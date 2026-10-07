@@ -46,13 +46,24 @@ const UA = 'NabdAlMaghribBot/1.0 (news site; contact via site)';
 const OK_LICENSE = /^(CC BY(-SA)? [\d.]+|CC0|Public domain|PD)/i;
 const stripHtml = (h = '') => h.replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 
+/** GET with a few retries: Wikimedia rate-limits (429) bursts of requests. */
+async function getWithRetry(url, tries = 4) {
+  let res;
+  for (let i = 0; i < tries; i++) {
+    res = await fetch(url, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(40000) });
+    if (res.ok || (res.status !== 429 && res.status < 500)) return res;
+    await new Promise((r) => setTimeout(r, 4000 * (i + 1)));
+  }
+  return res;
+}
+
 /** Free, key-less: real photo from Wikimedia Commons under a CC license; returns credit info or null. */
 export async function fetchCommons(query, file) {
   if (!query) return null;
   try {
     const u = new URL('https://commons.wikimedia.org/w/api.php');
     Object.entries({ action: 'query', generator: 'search', gsrsearch: `${query} filetype:bitmap`, gsrnamespace: 6, gsrlimit: 20, prop: 'imageinfo', iiprop: 'url|size|mime|extmetadata', iiurlwidth: 1600, format: 'json' }).forEach(([k, v]) => u.searchParams.set(k, v));
-    const res = await fetch(u, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(20000) });
+    const res = await getWithRetry(u);
     if (!res.ok) return null;
     const pages = Object.values((await res.json()).query?.pages || {}).sort((a, b) => a.index - b.index);
     const pick = pages.map((p) => ({ p, ii: p.imageinfo?.[0] })).find(({ ii }) => {
@@ -61,7 +72,7 @@ export async function fetchCommons(query, file) {
     });
     if (!pick) return null;
     const { ii } = pick;
-    const img = await fetch(ii.thumburl || ii.url, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(40000) });
+    const img = await getWithRetry(ii.thumburl || ii.url);
     if (!img.ok) return null;
     await sharp(Buffer.from(await img.arrayBuffer())).resize(W, H, { fit: 'cover', position: 'attention' }).jpeg({ quality: 82, mozjpeg: true }).toFile(file);
     const m = ii.extmetadata;
