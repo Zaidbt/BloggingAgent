@@ -1,12 +1,12 @@
 ---
 title: "المنتخب المغربي للقاعة يدخل مرحلة الاستعداد الأخيرة لكأس إفريقيا 2026"
 description: "يستعد أسود الأطلس لكأس إفريقيا للقاعة بالمغرب من 12 إلى 21 أكتوبر، وهذه مواعيد مباريات المجموعة الأولى أمام الجزائر وزامبيا وليبيا."
-date: 2026-10-07T05:39:54Z
+date: 2026-10-07T11:41:49Z
 category: "sport"
 tags: ["كرة القدم داخل القاعة","أسود الأطلس","كأس إفريقيا","هشام الدكيك"]
 image: "../../assets/posts/morocco-futsal-afcon-2026-final-preparations.jpg"
-imageAlt: "المنتخب المغربي النسوي لكرة القدم داخل القاعة خلال كأس إفريقيا للسيدات 2025"
-imageCredit: {"name":"Reda benkhadra","url":"https://commons.wikimedia.org/wiki/File:Morocco_women%27s_national_futsal_team_(WAFCON_Futsal_2025).jpg","source":"Wikimedia Commons, CC BY-SA 4.0"}
+imageAlt: "ملعب الأمير مولاي عبد الله بالرباط، ضمن المجمع الرياضي الذي تحتضن قاعته المغطاة مباريات البطولة"
+imageCredit: {"name":"Reda benkhadra","url":"https://commons.wikimedia.org/wiki/File:Moulay_Abdellah_Stadium.jpg","source":"Wikimedia Commons, CC BY-SA 4.0"}
 faq:
   - q: "متى تقام كأس إفريقيا لكرة القدم داخل القاعة 2026؟"
     a: "من 12 إلى 21 أكتوبر 2026 بالمغرب، وتحتضن القاعة المغطاة بالمجمع الرياضي الأمير مولاي عبد الله بالرباط مباريات المنتخب المغربي في دور المجموعات."

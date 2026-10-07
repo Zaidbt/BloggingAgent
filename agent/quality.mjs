@@ -20,7 +20,11 @@ export function validate(post, existing, { categories }) {
   if ((body.match(/^##\s/gm) || []).length < 3) p.push('need at least 3 H2 sections');
   if (!categories.includes(post.category)) p.push(`category must be one of: ${categories.join(', ')}`);
   if (!/^[a-z0-9]+(-[a-z0-9]+){1,}$/.test(post.slug || '') || post.slug.length > 80) p.push('slug must be 2+ lowercase english words joined by hyphens');
+  if (/\b(team|teams|player|players|squad|national|women|womens|men|mens|fans|crowd|match|celebration|president|minister|king)\b/i.test(post.imageQuery || '')) {
+    p.push('imageQuery must name a PLACE or OBJECT (e.g. a stadium, a building, a landmark), never a team, people or an event; otherwise omit it to get a generated cover');
+  }
   if (!post.imageAlt) p.push('missing imageAlt (Arabic description of an illustrative image)');
+  // imageAlt must describe the photo literally; it must not suggest the photo shows the event or people in the story.
   if ((post.faq || []).length < 2) p.push('need at least 2 FAQ items');
   if ((post.sources || []).length < 2) p.push('not enough grounded sources (need >= 2)');
   if (/as an ai|i cannot|\[insert|lorem ipsum|TODO|كنموذج لغوي/i.test(body)) p.push('contains placeholder or AI-meta text');

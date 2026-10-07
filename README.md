@@ -17,3 +17,6 @@ NewsArticle, Breadcrumb, FAQ and Organization JSON-LD; canonical URLs; `lang="ar
 - Optional: variable `LLM_PROVIDER=anthropic` plus secret `ANTHROPIC_API_KEY` to write with Claude (paid).
 - Edit `site.config.json` for name, tagline, categories, contact email and URL.
 - Local: `npm install && npm run dev`; `GEMINI_API_KEY=... npm run agent:dry` previews an article.
+
+## Image policy
+Photos must show a place or object (stadium, building, landmark, a generic object), never a team, people or an event, so a photo can't imply it shows the story. `agent/quality.mjs` rejects an `imageQuery` naming teams/people; with no suitable photo the site uses a generated cover. `imageAlt` must describe the photo literally.
