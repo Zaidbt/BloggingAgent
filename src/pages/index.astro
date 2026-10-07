@@ -14,7 +14,7 @@ const grid = rest.slice(3, 15);
   <div class="wrap">
     {!lead && <p class="empty">لا توجد مقالات بعد. سيظهر أول خبر هنا فور تشغيل الوكيل.</p>}
     {lead && (
-      <section class="lead-grid">
+      <section class={side.length ? "lead-grid" : "lead-grid solo"}>
         <PostCard post={lead} variant="hero" eager />
         {side.length > 0 && (
           <aside class="side" aria-label="أخبار أخرى">

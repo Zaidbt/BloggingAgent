@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { generate, parseJson } from './llm.mjs';
 import { validate, slugify } from './quality.mjs';
-import { generateCover, fetchPhoto } from './images.mjs';
+import { generateCover, fetchPhoto, fetchCommons } from './images.mjs';
 import { toMarkdown } from './post.mjs';
 import { gatherNews } from './feeds.mjs';
 
@@ -67,7 +67,7 @@ async function writePost(story, notes, posts, feedback = '') {
       `- Attribute every claim to its source by name. Say clearly what is unconfirmed. End with a one-line note of the date of the latest information.\n` +
       `- Title: specific, informative, max 75 chars, no clickbait, no all-caps tricks. Description: 110-170 chars, accurate summary.\n` +
       `- slug: 3-7 lowercase English words joined by hyphens describing the story. tags: up to 5 short Arabic tags.\n` +
-      `- imageQuery: 2-4 English words for a generic stock photo that illustrates the theme (e.g. "Casablanca skyline", "football stadium crowd", "farmer olive field"); never people's names. imageAlt: Arabic one-sentence description of that illustrative image.\n` +
+      `- imageQuery: 2-4 English words naming a PLACE, building or object (not people) that has a good photo on Wikimedia Commons, e.g. "Parliament of Morocco Rabat", "Casablanca Hassan II Mosque", "Tangier port", "Mohammed V stadium"; never a person's name. imageAlt: Arabic one-sentence description of that illustrative image.\n` +
       `- 2-4 FAQ items with 1-3 sentence answers drawn only from the notes.\n${feedback ? `\nFix these problems from the previous attempt:\n${feedback}\n` : ''}\n` +
       `Return JSON: {"title":"","description":"","slug":"","category":"","tags":[""],"imageQuery":"","imageAlt":"","body":"markdown","faq":[{"q":"","a":""}]}`,
   });
@@ -109,7 +109,7 @@ async function main() {
 
     mkdirSync(assetsDir, { recursive: true });
     const imgFile = new URL(`${slug}.jpg`, assetsDir);
-    post.imageCredit = await fetchPhoto(post.imageQuery, imgFile.pathname);
+    post.imageCredit = (await fetchPhoto(post.imageQuery, imgFile.pathname)) || (await fetchCommons(post.imageQuery, imgFile.pathname));
     if (!post.imageCredit) await generateCover(post.category, imgFile.pathname);
     post.imagePath = `../../assets/posts/${slug}.jpg`;
     post.imageCredit ||= undefined;

@@ -3,7 +3,7 @@
 // post.json: {title, description, slug, category, tags[], imageAlt, imageQuery?, body, faq[{q,a}], sources[{title,url}]}
 import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { validate } from './quality.mjs';
-import { generateCover, fetchPhoto } from './images.mjs';
+import { generateCover, fetchPhoto, fetchCommons } from './images.mjs';
 import { toMarkdown } from './post.mjs';
 
 const root = new URL('../', import.meta.url);
@@ -30,7 +30,7 @@ if (existing.some((e) => e.slug === slug)) slug += `-${new Date().toISOString().
 post.date = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 mkdirSync(assetsDir, { recursive: true });
 const img = new URL(`${slug}.jpg`, assetsDir).pathname;
-post.imageCredit = (await fetchPhoto(post.imageQuery, img)) || undefined;
+post.imageCredit = (await fetchPhoto(post.imageQuery, img)) || (await fetchCommons(post.imageQuery, img)) || undefined;
 if (!post.imageCredit) await generateCover(post.category, img);
 post.imagePath = `../../assets/posts/${slug}.jpg`;
 post.tags = (post.tags || []).slice(0, 5);

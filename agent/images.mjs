@@ -42,6 +42,36 @@ export async function generateCover(category, file) {
   return null;
 }
 
+const UA = 'NabdAlMaghribBot/1.0 (news site; contact via site)';
+const OK_LICENSE = /^(CC BY(-SA)? [\d.]+|CC0|Public domain|PD)/i;
+const stripHtml = (h = '') => h.replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+
+/** Free, key-less: real photo from Wikimedia Commons under a CC license; returns credit info or null. */
+export async function fetchCommons(query, file) {
+  if (!query) return null;
+  try {
+    const u = new URL('https://commons.wikimedia.org/w/api.php');
+    Object.entries({ action: 'query', generator: 'search', gsrsearch: `${query} filetype:bitmap`, gsrnamespace: 6, gsrlimit: 20, prop: 'imageinfo', iiprop: 'url|size|mime|extmetadata', iiurlwidth: 1600, format: 'json' }).forEach(([k, v]) => u.searchParams.set(k, v));
+    const res = await fetch(u, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(20000) });
+    if (!res.ok) return null;
+    const pages = Object.values((await res.json()).query?.pages || {}).sort((a, b) => a.index - b.index);
+    const pick = pages.map((p) => ({ p, ii: p.imageinfo?.[0] })).find(({ ii }) => {
+      const m = ii?.extmetadata || {};
+      return ii && ii.mime === 'image/jpeg' && ii.width >= 1600 && ii.width / ii.height >= 1.4 && ii.width / ii.height <= 2.1 && OK_LICENSE.test(m.LicenseShortName?.value || '') && !/NonCommercial|NoDerivs/i.test(m.LicenseShortName?.value || '');
+    });
+    if (!pick) return null;
+    const { ii } = pick;
+    const img = await fetch(ii.thumburl || ii.url, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(40000) });
+    if (!img.ok) return null;
+    await sharp(Buffer.from(await img.arrayBuffer())).resize(W, H, { fit: 'cover', position: 'attention' }).jpeg({ quality: 82, mozjpeg: true }).toFile(file);
+    const m = ii.extmetadata;
+    return { name: stripHtml(m.Artist?.value).slice(0, 80) || 'Wikimedia Commons', url: ii.descriptionurl, source: `Wikimedia Commons, ${m.LicenseShortName.value}` };
+  } catch (e) {
+    console.warn('Commons failed:', e.message);
+    return null;
+  }
+}
+
 /** Try Pexels; returns credit info or null (caller falls back to generated cover). */
 export async function fetchPhoto(query, file) {
   const key = process.env.PEXELS_API_KEY;
