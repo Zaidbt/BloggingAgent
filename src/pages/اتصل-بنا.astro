@@ -1,0 +1,13 @@
+---
+import Base from '../layouts/Base.astro';
+import { site, abs, R } from '../lib/site';
+---
+<Base title="اتصل بنا" description={`تواصل مع هيئة تحرير ${site.name} لإرسال تصحيح أو اقتراح أو ملاحظة على أي مقال.`} canonicalPath={R.contact}
+  jsonLd={[{ '@context': 'https://schema.org', '@type': 'ContactPage', name: 'اتصل بنا', url: abs(R.contact), inLanguage: 'ar-MA' }]}>
+  <div class="wrap narrow prose page">
+    <h1 class="page-title">اتصل بنا</h1>
+    <p>يسعدنا أن نسمع منكم، سواء كان لديكم تصحيح لمعلومة، أو اقتراح لموضوع، أو ملاحظة على مقال.</p>
+    <p>البريد الإلكتروني للتحرير: <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></p>
+    <p>عند الإبلاغ عن خطأ، يرجى ذكر رابط المقال والجملة المعنية والمصدر الذي يثبت التصحيح.</p>
+  </div>
+</Base>

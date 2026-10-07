@@ -1,9 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
-import { site, abs } from '../lib/site';
+import { site, abs, path, R } from '../lib/site';
 ---
-<Base title="من نحن وسياستنا التحريرية" description={`تعرّف على ${site.name}: كيف نختار الأخبار، وكيف نتحقق منها، وكيف نستخدم الذكاء الاصطناعي بشفافية.`} canonicalPath="about"
-  jsonLd={[{ '@context': 'https://schema.org', '@type': 'AboutPage', name: 'من نحن', url: abs('about') }]}>
+<Base title="من نحن وسياستنا التحريرية" description={`تعرّف على ${site.name}: كيف نختار الأخبار، وكيف نتحقق منها، وكيف نستخدم الذكاء الاصطناعي بشفافية.`} canonicalPath={R.about}
+  jsonLd={[{ '@context': 'https://schema.org', '@type': 'AboutPage', name: 'من نحن', url: abs(R.about) }]}>
   <div class="wrap narrow prose page">
     <h1 class="page-title">من نحن</h1>
     <p>{site.name} موقع إخباري باللغة العربية يتابع ما يتصدر اهتمام المغاربة كل يوم، ويشرحه بلغة واضحة مع ذكر المصادر.</p>

@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
-import { site, abs, path, fmtDate, catLabel } from '../lib/site';
+import { site, abs, path, fmtDate, catPath, R } from '../lib/site';
+import { fontFiles } from '../lib/fonts';
 import '../styles/global.css';
 
 interface Props {
@@ -11,48 +12,71 @@ interface Props {
   published?: Date;
   modified?: Date;
   image?: string;
+  imageAlt?: string;
+  section?: string;
+  tags?: string[];
   jsonLd?: object[];
   noindex?: boolean;
 }
-const { title, description, canonicalPath, type = 'website', published, modified, image, jsonLd = [], noindex = false } = Astro.props;
+const { title, description, canonicalPath, type = 'website', published, modified, image, imageAlt, section, tags = [], jsonLd = [], noindex = false } = Astro.props;
 const canonical = abs(canonicalPath);
-const fullTitle = title.includes(site.name) ? title : `${title} | ${site.name}`;
+// Google shows ~60 characters: long headlines go out alone, short ones carry the brand
+const fullTitle = title.includes(site.name) || title.length > 48 ? title : `${title} | ${site.name}`;
 const posts = await getCollection('posts');
 const usedCats = site.categories.filter((c) => posts.some((p) => p.data.category === c.slug));
 const graph = [
-  { '@context': 'https://schema.org', '@type': 'WebSite', name: site.name, url: abs(), inLanguage: site.language },
-  { '@context': 'https://schema.org', '@type': 'NewsMediaOrganization', name: site.name, url: abs(), logo: { '@type': 'ImageObject', url: abs('favicon.svg') } },
+  { '@context': 'https://schema.org', '@type': 'WebSite', '@id': abs() + '#website', name: site.name, url: abs(), inLanguage: 'ar-MA', description: site.tagline, publisher: { '@id': abs() + '#org' } },
+  { '@context': 'https://schema.org', '@type': 'NewsMediaOrganization', '@id': abs() + '#org', name: site.name, url: abs(), logo: { '@type': 'ImageObject', url: abs('icon-512.png'), width: 512, height: 512 }, description: site.tagline, areaServed: { '@type': 'Country', name: 'المغرب' }, publishingPrinciples: abs(R.editorial), ethicsPolicy: abs(R.editorial), correctionsPolicy: abs(R.editorial), contactPoint: { '@type': 'ContactPoint', contactType: 'editorial', email: site.contactEmail, availableLanguage: ['ar'] } },
   ...jsonLd,
 ];
-const ogImage = image ? new URL(image, site.url).href : undefined;
+const ogImage = new URL(image ?? path('og-default.jpg'), site.url).href;
+const fontCss = fontFiles
+  .map((f) => `@font-face{font-family:'${f.family}';font-style:normal;font-weight:${f.weight};font-display:swap;src:url(${path('fonts/' + f.file)}) format('woff2');unicode-range:${f.range}}`)
+  .join('');
+const preload = fontFiles.filter((f) => f.subset === 'arabic' && (f.family === 'Cairo' || f.weight === '400'));
 ---
 <!doctype html>
-<html lang={site.language} dir="rtl">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="ar" href={canonical} />
+    <link rel="alternate" hreflang="x-default" href={canonical} />
     <meta name="robots" content={noindex ? 'noindex,follow' : 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'} />
+    <meta name="googlebot-news" content={noindex ? 'noindex' : 'index,follow'} />
+    <meta name="author" content={site.author.name} />
     <meta name="theme-color" content="#c1272d" />
+    <meta name="format-detection" content="telephone=no" />
     <link rel="icon" href={path('favicon.svg')} type="image/svg+xml" />
-    <link rel="sitemap" href={path('sitemap-index.xml')} />
+    <link rel="apple-touch-icon" href={path('apple-touch-icon.png')} />
+    <link rel="manifest" href={path('manifest.webmanifest')} />
+    <link rel="sitemap" type="application/xml" href={path('sitemap-index.xml')} />
     <link rel="alternate" type="application/rss+xml" title={site.name} href={path('rss.xml')} />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet" />
+    {preload.map((f) => <link rel="preload" as="font" type="font/woff2" href={path('fonts/' + f.file)} crossorigin />)}
+    <style is:inline set:html={fontCss}></style>
     <meta property="og:type" content={type} />
     <meta property="og:locale" content="ar_MA" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={site.name} />
-    {ogImage && <meta property="og:image" content={ogImage} />}
-    <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
-    {ogImage && <meta name="twitter:image" content={ogImage} />}
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    {imageAlt && <meta property="og:image:alt" content={imageAlt} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    {imageAlt && <meta name="twitter:image:alt" content={imageAlt} />}
     {published && <meta property="article:published_time" content={published.toISOString()} />}
     {modified && <meta property="article:modified_time" content={modified.toISOString()} />}
+    {section && <meta property="article:section" content={section} />}
+    {type === 'article' && <meta property="article:author" content={abs(R.about)} />}
+    {tags.map((t) => <meta property="article:tag" content={t} />)}
     <script type="application/ld+json" set:html={JSON.stringify(graph)} />
   </head>
   <body>
@@ -66,8 +90,8 @@ const ogImage = image ? new URL(image, site.url).href : undefined;
         </a>
         <nav class="cats" aria-label="الأقسام">
           <a href={path()}>الرئيسية</a>
-          {usedCats.map((c) => <a href={path(`category/${c.slug}`)}>{c.label}</a>)}
-          <a href={path('blog')}>الأرشيف</a>
+          {usedCats.map((c) => <a href={path(catPath(c.slug))}>{c.label}</a>)}
+          <a href={path(R.news)}>الأرشيف</a>
         </nav>
       </div>
     </header>
@@ -80,13 +104,15 @@ const ogImage = image ? new URL(image, site.url).href : undefined;
         </div>
         <div>
           <p class="footer-title">الأقسام</p>
-          <ul>{usedCats.map((c) => <li><a href={path(`category/${c.slug}`)}>{c.label}</a></li>)}</ul>
+          <ul>{usedCats.map((c) => <li><a href={path(catPath(c.slug))}>{c.label}</a></li>)}</ul>
         </div>
         <div>
           <p class="footer-title">عن الموقع</p>
           <ul>
-            <li><a href={path('about')}>من نحن وسياستنا التحريرية</a></li>
-            <li><a href={path('privacy')}>سياسة الخصوصية</a></li>
+            <li><a href={path(R.about)}>من نحن</a></li>
+            <li><a href={path(R.editorial)}>سياسة التحرير والتصحيحات</a></li>
+            <li><a href={path(R.contact)}>اتصل بنا</a></li>
+            <li><a href={path(R.privacy)}>سياسة الخصوصية</a></li>
             <li><a href={path('rss.xml')}>RSS</a></li>
           </ul>
         </div>

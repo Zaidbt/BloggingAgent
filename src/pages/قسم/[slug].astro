@@ -1,0 +1,29 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import { site, abs, path, R } from '../../lib/site';
+
+export async function getStaticPaths() {
+  const posts = (await getCollection('posts')).sort((a, b) => +b.data.date - +a.data.date);
+  return site.categories
+    .filter((c) => posts.some((p) => p.data.category === c.slug))
+    .map((c) => ({ params: { slug: c.slugAr }, props: { cat: c, posts: posts.filter((p) => p.data.category === c.slug) } }));
+}
+const { cat, posts } = Astro.props;
+const cp = `${R.category}/${cat.slugAr}`;
+---
+<Base title={`أخبار ${cat.label} في المغرب`} description={cat.description} canonicalPath={cp}
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'CollectionPage', name: `أخبار ${cat.label}`, description: cat.description, url: abs(cp), inLanguage: 'ar-MA' },
+    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'الرئيسية', item: abs() },
+      { '@type': 'ListItem', position: 2, name: cat.label, item: abs(cp) } ] },
+  ]}>
+  <div class="wrap">
+    <nav class="breadcrumbs" aria-label="مسار التصفح"><a href={path()}>الرئيسية</a> ‹ {cat.label}</nav>
+    <h1 class="page-title">أخبار {cat.label} في المغرب</h1>
+    <p class="lede-page">{cat.description}</p>
+    <div class="grid">{posts.map((p) => <PostCard post={p} />)}</div>
+  </div>
+</Base>

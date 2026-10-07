@@ -61,15 +61,15 @@ async function writePost(story, notes, posts, feedback = '') {
   const { text } = await generate({
     system: SYSTEM, json: true, maxTokens: 12000,
     prompt: `Write the news article in Arabic.\nStory: ${story.headline}\nSuggested category: ${story.category}\n\nSOURCE ARTICLES from Moroccan outlets (the ONLY source of facts; rewrite in your own words, never copy sentences):\n${notes}\n\n` +
-      `Existing articles you may link to (0-2 links, only if clearly relevant, as markdown links to /blog/<slug>/):\n${links}\n\n` +
+      `Existing articles you may link to (0-2 links, only if clearly relevant, as markdown links to /أخبار/<slug>/):\n${links}\n\n` +
       `Requirements:\n- 550-950 words of markdown body in Arabic. NO H1. 3-5 H2 sections (e.g. "ما الذي حدث؟", "الخلفية", "لماذا يهم القراء؟", "ماذا بعد؟" - adapt to the story).\n` +
       `- Inverted pyramid: the first paragraph answers who/what/when/where in 2-3 sentences. Then a short bullet list "أبرز النقاط" (3-4 bullets).\n` +
       `- Attribute every claim to its source by name. Say clearly what is unconfirmed. End with a one-line note of the date of the latest information.\n` +
-      `- Title: specific, informative, max 75 chars, no clickbait, no all-caps tricks. Description: 110-170 chars, accurate summary.\n` +
-      `- slug: 3-7 lowercase English words joined by hyphens describing the story. tags: up to 5 short Arabic tags.\n` +
+      `- Title: specific, informative, 45-62 chars (Google truncates longer titles), key terms FIRST, no clickbait, no all-caps tricks. Description: 110-170 chars, accurate summary.\n` +
+      `- slug: 3-8 ARABIC words joined by hyphens, taken from the title's key terms (no diacritics, no punctuation, no stop-word padding), e.g. "حوادث-السير-بالمدن-33-قتيلا-أسبوع". imageName: 3-6 lowercase English words joined by hyphens (the image file name). tags: up to 5 short Arabic tags.\n` +
       `- imageQuery: 2-4 English words naming a PLACE, building or object (not people) that has a good photo on Wikimedia Commons, e.g. "Parliament of Morocco Rabat", "Casablanca Hassan II Mosque", "Tangier port", "Mohammed V stadium"; never a person's name. imageAlt: Arabic one-sentence description of that illustrative image.\n` +
       `- 2-4 FAQ items with 1-3 sentence answers drawn only from the notes.\n${feedback ? `\nFix these problems from the previous attempt:\n${feedback}\n` : ''}\n` +
-      `Return JSON: {"title":"","description":"","slug":"","category":"","tags":[""],"imageQuery":"","imageAlt":"","body":"markdown","faq":[{"q":"","a":""}]}`,
+      `Return JSON: {"title":"","description":"","slug":"","imageName":"","category":"","tags":[""],"imageQuery":"","imageAlt":"","body":"markdown","faq":[{"q":"","a":""}]}`,
   });
   return parseJson(text);
 }
@@ -108,10 +108,10 @@ async function main() {
     if (dry) { console.log(toMarkdown({ ...post, imagePath: '../../assets/posts/x.jpg' }, { base: cfg.base })); return; }
 
     mkdirSync(assetsDir, { recursive: true });
-    const imgFile = new URL(`${slug}.jpg`, assetsDir);
+    const imgFile = new URL(`${post.imageName || 'post-' + Date.now().toString(36)}.jpg`, assetsDir);
     post.imageCredit = (await fetchPhoto(post.imageQuery, imgFile.pathname)) || (await fetchCommons(post.imageQuery, imgFile.pathname));
     if (!post.imageCredit) await generateCover(post.category, imgFile.pathname);
-    post.imagePath = `../../assets/posts/${slug}.jpg`;
+    post.imagePath = `../../assets/posts/${imgFile.pathname.split('/').pop()}`;
     post.imageCredit ||= undefined;
 
     writeFileSync(new URL(`${slug}.md`, postsDir), toMarkdown(post, { base: cfg.base }));

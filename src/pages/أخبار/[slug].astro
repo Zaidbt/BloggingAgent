@@ -3,7 +3,7 @@ import { getCollection, render } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import PostCard from '../../components/PostCard.astro';
-import { site, abs, path, fmtDate, readingTime, catLabel } from '../../lib/site';
+import { site, abs, path, fmtDate, readingTime, catLabel, catPath, postPath, tagPath, R } from '../../lib/site';
 
 export async function getStaticPaths() {
   const posts = await getCollection('posts');
@@ -12,7 +12,7 @@ export async function getStaticPaths() {
 const { post, all } = Astro.props;
 const { Content, headings } = await render(post);
 const d = post.data;
-const url = `blog/${post.id}`;
+const url = postPath(post.id);
 const toc = headings.filter((h) => h.depth === 2);
 const related = all
   .filter((p) => p.id !== post.id)
@@ -24,33 +24,44 @@ const related = all
 
 const og = await getImage({ src: d.image, width: 1200, height: 630, fit: 'cover', format: 'jpg' });
 const full = await getImage({ src: d.image, width: 1600, format: 'jpg' });
+const sq = await getImage({ src: d.image, width: 1200, height: 1200, fit: 'cover', format: 'jpg' });
+const wide = await getImage({ src: d.image, width: 1200, height: 675, fit: 'cover', format: 'jpg' });
 const shareUrl = encodeURIComponent(abs(url));
 const shareText = encodeURIComponent(d.title);
+const words = (post.body ?? '').split(/\s+/).filter(Boolean).length;
 
 const jsonLd: object[] = [
   {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: d.title,
+    alternativeHeadline: d.description,
     description: d.description,
-    image: [new URL(og.src, site.url).href, new URL(full.src, site.url).href],
+    image: [new URL(sq.src, site.url).href, new URL(og.src, site.url).href, new URL(wide.src, site.url).href, new URL(full.src, site.url).href],
+    thumbnailUrl: new URL(og.src, site.url).href,
     datePublished: d.date.toISOString(),
     dateModified: (d.updated ?? d.date).toISOString(),
-    mainEntityOfPage: abs(url),
-    inLanguage: site.language,
-    wordCount: (post.body ?? '').split(/\s+/).length,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': abs(url) },
+    url: abs(url),
+    inLanguage: 'ar-MA',
+    isAccessibleForFree: true,
+    wordCount: words,
     keywords: d.tags.join(', '),
     articleSection: catLabel(d.category),
-    author: { '@type': 'Organization', name: site.author.name, url: abs('about') },
-    publisher: { '@type': 'NewsMediaOrganization', name: site.name, url: abs(), logo: { '@type': 'ImageObject', url: abs('favicon.svg') } },
+    about: d.tags.map((t) => ({ '@type': 'Thing', name: t })),
+    locationCreated: { '@type': 'Place', name: 'المغرب' },
+    author: { '@type': 'Organization', name: site.author.name, url: abs(R.about) },
+    publisher: { '@type': 'NewsMediaOrganization', name: site.name, url: abs(), logo: { '@type': 'ImageObject', url: abs('icon-512.png'), width: 512, height: 512 } },
     isBasedOn: d.sources.map((s) => s.url),
+    citation: d.sources.map((s) => ({ '@type': 'CreativeWork', name: s.title, url: s.url })),
+    speakable: { '@type': 'SpeakableSpecification', cssSelector: ['h1', '.lede'] },
   },
   {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'الرئيسية', item: abs() },
-      { '@type': 'ListItem', position: 2, name: catLabel(d.category), item: abs(`category/${d.category}`) },
+      { '@type': 'ListItem', position: 2, name: catLabel(d.category), item: abs(catPath(d.category)) },
       { '@type': 'ListItem', position: 3, name: d.title, item: abs(url) },
     ],
   },
@@ -63,18 +74,19 @@ if (d.faq.length) {
   });
 }
 ---
-<Base title={d.title} description={d.description} canonicalPath={url} type="article" published={d.date} modified={d.updated ?? d.date} image={og.src} jsonLd={jsonLd}>
+<Base title={d.title} description={d.description} canonicalPath={url} type="article" published={d.date} modified={d.updated ?? d.date}
+  image={og.src} imageAlt={d.imageAlt} section={catLabel(d.category)} tags={d.tags} jsonLd={jsonLd}>
   <div class="wrap article-wrap">
     <nav class="breadcrumbs" aria-label="مسار التصفح">
-      <a href={path()}>الرئيسية</a> ‹ <a href={path(`category/${d.category}`)}>{catLabel(d.category)}</a>
+      <a href={path()}>الرئيسية</a> ‹ <a href={path(catPath(d.category))}>{catLabel(d.category)}</a>
     </nav>
     <article>
       <header class="article-head">
-        <a class="chip" href={path(`category/${d.category}`)}>{catLabel(d.category)}</a>
+        <a class="chip" href={path(catPath(d.category))}>{catLabel(d.category)}</a>
         <h1>{d.title}</h1>
         <p class="lede">{d.description}</p>
         <p class="meta">
-          <a href={path('about')}>{site.author.name}</a> ·
+          <a href={path(R.about)}>{site.author.name}</a> ·
           <time datetime={d.date.toISOString()}>{fmtDate(d.date)}</time>
           {d.updated && <> · تحديث <time datetime={d.updated.toISOString()}>{fmtDate(d.updated)}</time></>}
           · {readingTime(post.body ?? '')} د للقراءة
@@ -108,8 +120,11 @@ if (d.faq.length) {
               <ul>{d.sources.map((s) => <li><a href={s.url} rel="noopener nofollow" target="_blank">{s.title}</a></li>)}</ul>
             </section>
           )}
+          {d.tags.length > 0 && (
+            <p class="tags">{d.tags.map((t) => <a class="tag" href={path(tagPath(t))}>{t}</a>)}</p>
+          )}
           <aside class="box author-box">
-            <p><strong>{site.author.name}</strong> — {site.author.bio}</p>
+            <p><strong>{site.author.name}</strong> — {site.author.bio} <a href={path(R.editorial)}>سياسة التحرير والتصحيحات</a></p>
             <p class="meta">{site.aiDisclosure}</p>
           </aside>
         </div>

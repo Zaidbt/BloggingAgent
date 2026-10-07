@@ -74,7 +74,7 @@ export async function fetchCommons(query, file) {
     const { ii } = pick;
     const img = await getWithRetry(ii.thumburl || ii.url);
     if (!img.ok) return null;
-    await sharp(Buffer.from(await img.arrayBuffer())).resize(W, H, { fit: 'cover', position: 'attention' }).jpeg({ quality: 82, mozjpeg: true }).toFile(file);
+    await sharp(Buffer.from(await img.arrayBuffer())).resize(W, H, { fit: 'cover', position: 'centre' }).jpeg({ quality: 82, mozjpeg: true }).toFile(file);
     const m = ii.extmetadata;
     return { name: stripHtml(m.Artist?.value).slice(0, 80) || 'Wikimedia Commons', url: ii.descriptionurl, source: `Wikimedia Commons, ${m.LicenseShortName.value}` };
   } catch (e) {
@@ -95,7 +95,7 @@ export async function fetchPhoto(query, file) {
     if (!pick) return null;
     const img = await fetch(pick.src.large2x || pick.src.large);
     if (!img.ok) return null;
-    await sharp(Buffer.from(await img.arrayBuffer())).resize(W, H, { fit: 'cover', position: 'attention' }).jpeg({ quality: 82, mozjpeg: true }).toFile(file);
+    await sharp(Buffer.from(await img.arrayBuffer())).resize(W, H, { fit: 'cover', position: 'centre' }).jpeg({ quality: 82, mozjpeg: true }).toFile(file);
     return { name: pick.photographer, url: pick.url, source: 'Pexels' };
   } catch (e) {
     console.warn('Pexels failed:', e.message);

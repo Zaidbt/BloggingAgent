@@ -1,12 +1,12 @@
 ---
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
-import { path, catLabel, fmtDate, readingTime } from '../lib/site';
+import { path, postPath, catLabel, fmtDate, readingTime } from '../lib/site';
 
 interface Props { post: CollectionEntry<'posts'>; variant?: 'hero' | 'card' | 'row'; eager?: boolean }
 const { post, variant = 'card', eager = false } = Astro.props;
 const d = post.data;
-const href = path(`blog/${post.id}`);
+const href = path(postPath(post.id));
 ---
 {variant === 'hero' && (
   <a class="hero" href={href}>

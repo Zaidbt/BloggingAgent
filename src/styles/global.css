@@ -2,8 +2,8 @@
   --bg:#faf7f2;--surface:#fff;--fg:#17130f;--muted:#6a6157;--line:#e8e1d6;
   --red:#c1272d;--red-d:#9d1d22;--green:#006233;--soft:#f3ede3;
   --shadow:0 1px 2px rgba(23,19,15,.06),0 8px 24px -12px rgba(23,19,15,.18);
-  --head:"Cairo","IBM Plex Sans Arabic",system-ui,sans-serif;
-  --body:"IBM Plex Sans Arabic","Cairo",system-ui,sans-serif;
+  --head:"Cairo","IBM Plex Sans Arabic",Tahoma,system-ui,sans-serif;
+  --body:"IBM Plex Sans Arabic","Cairo",Tahoma,system-ui,sans-serif;
   --r:16px;
 }
 @media (prefers-color-scheme:dark){:root{
@@ -137,3 +137,9 @@ details p{margin:.5rem 0 0}
   .prose{font-size:1.05rem}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* extra: tags, category intro */
+.lede-page{color:var(--muted);max-width:46rem;margin:-.6rem 0 1.6rem}
+.tags{margin:1.4rem 0 0}
+.tags .tag{text-decoration:none;margin:0 0 .4rem .4rem;padding:.1rem .7rem;font-size:.8rem}
+.tags .tag:hover{background:var(--red);color:#fff}

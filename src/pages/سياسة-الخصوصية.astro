@@ -1,8 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
-import { site } from '../lib/site';
+import { site, R } from '../lib/site';
 ---
-<Base title="سياسة الخصوصية" description={`سياسة الخصوصية لموقع ${site.name}: ما البيانات التي نجمعها وما لا نجمعه.`} canonicalPath="privacy">
+<Base title="سياسة الخصوصية" description={`سياسة الخصوصية لموقع ${site.name}: ما البيانات التي نجمعها وما لا نجمعه.`} canonicalPath={R.privacy}>
   <div class="wrap narrow prose page">
     <h1 class="page-title">سياسة الخصوصية</h1>
     <p>لا يستخدم هذا الموقع ملفات تعريف الارتباط ولا يجمع بيانات شخصية بنفسه. قد يحتفظ مزوّد الاستضافة بسجلات تقنية اعتيادية (عنوان IP ونوع المتصفح) لأغراض الأمان والتشغيل.</p>

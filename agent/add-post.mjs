@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Publish an article written outside the LLM pipeline (e.g. by a Claude session): node agent/add-post.mjs post.json
-// post.json: {title, description, slug, category, tags[], imageAlt, imageQuery?, body, faq[{q,a}], sources[{title,url}]}
+// post.json: {title, description, slug (Arabic, hyphenated), imageName (english, for the file), category, tags[], imageAlt, imageQuery?, body, faq[{q,a}], sources[{title,url}]}
 import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { validate } from './quality.mjs';
 import { generateCover, fetchPhoto, fetchCommons } from './images.mjs';
@@ -29,10 +29,11 @@ let slug = post.slug;
 if (existing.some((e) => e.slug === slug)) slug += `-${new Date().toISOString().slice(0, 10)}`;
 post.date = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 mkdirSync(assetsDir, { recursive: true });
-const img = new URL(`${slug}.jpg`, assetsDir).pathname;
+const imgName = post.imageName || `post-${slug.length}-${Date.now().toString(36)}`; // ASCII file name keeps image URLs clean
+const img = new URL(`${imgName}.jpg`, assetsDir).pathname;
 post.imageCredit = (await fetchPhoto(post.imageQuery, img)) || (await fetchCommons(post.imageQuery, img)) || undefined;
 if (!post.imageCredit) await generateCover(post.category, img);
-post.imagePath = `../../assets/posts/${slug}.jpg`;
+post.imagePath = `../../assets/posts/${imgName}.jpg`;
 post.tags = (post.tags || []).slice(0, 5);
 writeFileSync(new URL(`${slug}.md`, postsDir), toMarkdown(post, { base: cfg.base }));
 console.log(`Saved src/content/posts/${slug}.md (${post.imageCredit ? 'photo' : 'generated cover'})`);

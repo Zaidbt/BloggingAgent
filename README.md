@@ -20,3 +20,8 @@ NewsArticle, Breadcrumb, FAQ and Organization JSON-LD; canonical URLs; `lang="ar
 
 ## Image policy
 Photos must show a place or object (stadium, building, landmark, a generic object), never a team, people or an event, so a photo can't imply it shows the story. `agent/quality.mjs` rejects an `imageQuery` naming teams/people; with no suitable photo the site uses a generated cover. `imageAlt` must describe the photo literally.
+
+## SEO checklist (what is built in)
+Arabic URLs (`/أخبار/<arabic-slug>/`, `/قسم/…`, `/وسم/…`), NewsArticle + Breadcrumb + FAQ + NewsMediaOrganization JSON-LD, canonical + hreflang, Open Graph/Twitter images (1200×630), sitemap with `<lastmod>`, Google News sitemap (`/news-sitemap.xml`), IndexNow ping after each deploy (Bing/Yandex), RSS, `llms.txt`, self-hosted fonts (no third-party request), responsive WebP images, trust pages (about, editorial policy & corrections, contact, privacy), thin tag pages are `noindex` until they hold 3 articles.
+
+To get discovered faster: verify the site in Google Search Console and submit `sitemap-index.xml` + `news-sitemap.xml`, add it to Bing Webmaster Tools, and use a custom domain (robots.txt and root-level files only work on a domain root).

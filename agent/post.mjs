@@ -2,7 +2,7 @@
 const q = (s) => JSON.stringify(s); // JSON strings are valid YAML scalars
 
 export function toMarkdown(p, { base = '' } = {}) {
-  const body = p.body.trim().replace(/\]\(\/blog\//g, `](${base.replace(/\/$/, '')}/blog/`);
+  const body = p.body.trim().replace(/\]\(\/أخبار\//g, `](${base.replace(/\/$/, '')}/أخبار/`);
   return [
     '---',
     `title: ${q(p.title)}`,

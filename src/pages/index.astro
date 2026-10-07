@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import PostCard from '../components/PostCard.astro';
-import { site, path, abs } from '../lib/site';
+import { site, path, abs, R } from '../lib/site';
 
 const posts = (await getCollection('posts')).sort((a, b) => +b.data.date - +a.data.date);
 const [lead, ...rest] = posts;
@@ -28,7 +28,7 @@ const grid = rest.slice(3, 15);
       <section>
         <h2 class="section-title">آخر المقالات</h2>
         <div class="grid">{grid.map((p) => <PostCard post={p} />)}</div>
-        <p class="more"><a class="btn" href={path('blog')}>عرض كل المقالات</a></p>
+        <p class="more"><a class="btn" href={path(R.news)}>عرض كل المقالات</a></p>
       </section>
     )}
   </div>

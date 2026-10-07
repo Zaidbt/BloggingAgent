@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import { site, abs, path, tagSlug, R } from '../../lib/site';
+
+export async function getStaticPaths() {
+  const posts = (await getCollection('posts')).sort((a, b) => +b.data.date - +a.data.date);
+  const tags = new Map<string, typeof posts>();
+  for (const p of posts) for (const t of p.data.tags) tags.set(t, [...(tags.get(t) ?? []), p]);
+  return [...tags].map(([tag, list]) => ({ params: { tag: tagSlug(tag) }, props: { tag, posts: list } }));
+}
+const { tag, posts } = Astro.props;
+const cp = `${R.tag}/${tagSlug(tag)}`;
+// thin tag pages stay out of the index until they hold at least 3 articles
+const thin = posts.length < 3;
+---
+<Base title={`${tag}: آخر الأخبار والمقالات`} description={`كل ما نشره ${site.name} عن «${tag}»: أخبار ومقالات مرتبة من الأحدث، مع المصادر.`} canonicalPath={cp} noindex={thin}
+  jsonLd={[{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: tag, url: abs(cp), inLanguage: 'ar-MA' }]}>
+  <div class="wrap">
+    <nav class="breadcrumbs" aria-label="مسار التصفح"><a href={path()}>الرئيسية</a> ‹ {tag}</nav>
+    <h1 class="page-title">{tag}</h1>
+    <div class="grid">{posts.map((p) => <PostCard post={p} />)}</div>
+  </div>
+</Base>
