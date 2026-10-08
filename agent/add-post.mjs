@@ -33,6 +33,7 @@ const imgName = post.imageName || `post-${slug.length}-${Date.now().toString(36)
 const img = new URL(`${imgName}.jpg`, assetsDir).pathname;
 post.imageCredit = (await fetchPhoto(post.imageQuery, img)) || (await fetchCommons(post.imageQuery, img)) || undefined;
 if (!post.imageCredit) await generateCover(post.category, img);
+if (!post.imageCredit) post.imageAlt = `غلاف تجريدي بنقوش مغربية لقسم ${cfg.categories.find((c) => c.slug === post.category)?.label ?? ''}`; // alt must describe what is really shown
 post.imagePath = `../../assets/posts/${imgName}.jpg`;
 post.tags = (post.tags || []).slice(0, 5);
 writeFileSync(new URL(`${slug}.md`, postsDir), toMarkdown(post, { base: cfg.base }));
