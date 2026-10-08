@@ -18,8 +18,8 @@ NewsArticle, Breadcrumb, FAQ and Organization JSON-LD; canonical URLs; `lang="ar
 - Edit `site.config.json` for name, tagline, categories, contact email and URL.
 - Local: `npm install && npm run dev`; `GEMINI_API_KEY=... npm run agent:dry` previews an article.
 
-## Image policy
-Photos must show a place or object (stadium, building, landmark, a generic object), never a team, people or an event, so a photo can't imply it shows the story. `agent/quality.mjs` rejects an `imageQuery` naming teams/people; with no suitable photo the site uses a generated cover. `imageAlt` must describe the photo literally.
+## Image policy: every article always gets a good image
+Chain (first hit wins, `agent/images.mjs`): Pexels (if `PEXELS_API_KEY`) -> Openverse (CC photos, no key) -> Wikimedia Commons, trying up to 3 queries from specific to general -> **editorial thumbnail** (`agent/thumb.mjs`: category colours, topic icon and the story's key figure, rendered with Chromium). Photos must show a place, landscape or object, never a team, people or an event; `agent/quality.mjs` rejects queries naming them. `imageAlt` must describe the image literally (use `imageAlts` per query).
 
 ## SEO checklist (what is built in)
 Arabic URLs (`/أخبار/<arabic-slug>/`, `/قسم/…`, `/وسم/…`), NewsArticle + Breadcrumb + FAQ + NewsMediaOrganization JSON-LD, canonical + hreflang, Open Graph/Twitter images (1200×630), sitemap with `<lastmod>`, Google News sitemap (`/news-sitemap.xml`), IndexNow ping after each deploy (Bing/Yandex), RSS, `llms.txt`, self-hosted fonts (no third-party request), responsive WebP images, trust pages (about, editorial policy & corrections, contact, privacy), thin tag pages are `noindex` until they hold 3 articles.

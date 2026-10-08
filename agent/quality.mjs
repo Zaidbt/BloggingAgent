@@ -24,7 +24,8 @@ export function validate(post, existing, { categories }) {
     p.push('slug must be 3-8 Arabic words joined by hyphens (no diacritics/punctuation, max 90 chars), built from the title keywords');
   }
   if (post.imageName && !/^[a-z0-9-]{3,60}$/.test(post.imageName)) p.push('imageName must be lowercase english letters, digits and hyphens (used as the image file name)');
-  if (/\b(team|teams|player|players|squad|national|women|womens|men|mens|fans|crowd|match|celebration|president|minister|king)\b/i.test(post.imageQuery || '')) {
+  const queries = [post.imageQuery, ...(post.imageQueries || [])].filter(Boolean);
+  if (queries.some((q) => /\b(team|teams|player|players|squad|national|women|womens|men|mens|fans|crowd|match|celebration|president|minister|king)\b/i.test(q))) {
     p.push('imageQuery must name a PLACE or OBJECT (e.g. a stadium, a building, a landmark), never a team, people or an event; otherwise omit it to get a generated cover');
   }
   if (!post.imageAlt) p.push('missing imageAlt (Arabic description of an illustrative image)');

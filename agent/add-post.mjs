@@ -3,7 +3,8 @@
 // post.json: {title, description, slug (Arabic, hyphenated), imageName (english, for the file), category, tags[], imageAlt, imageQuery?, body, faq[{q,a}], sources[{title,url}]}
 import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { validate } from './quality.mjs';
-import { generateCover, fetchPhoto, fetchCommons } from './images.mjs';
+import { generateCover, findPhoto } from './images.mjs';
+import { makeThumb } from './thumb.mjs';
 import { toMarkdown } from './post.mjs';
 
 const root = new URL('../', import.meta.url);
@@ -31,9 +32,14 @@ post.date = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 mkdirSync(assetsDir, { recursive: true });
 const imgName = post.imageName || `post-${slug.length}-${Date.now().toString(36)}`; // ASCII file name keeps image URLs clean
 const img = new URL(`${imgName}.jpg`, assetsDir).pathname;
-post.imageCredit = (await fetchPhoto(post.imageQuery, img)) || (await fetchCommons(post.imageQuery, img)) || undefined;
-if (!post.imageCredit) await generateCover(post.category, img);
-if (!post.imageCredit) post.imageAlt = `غلاف تجريدي بنقوش مغربية لقسم ${cfg.categories.find((c) => c.slug === post.category)?.label ?? ''}`; // alt must describe what is really shown
+const found = await findPhoto(post.imageQueries || [post.imageQuery], img);
+if (found) { const { _i, ...credit } = found; post.imageCredit = credit; if (post.imageAlts?.[_i]) post.imageAlt = post.imageAlts[_i]; }
+if (!post.imageCredit) {
+  // guaranteed last step: a designed editorial thumbnail (topic icon + headline figure)
+  const th = post.thumb || {};
+  try { await makeThumb({ category: post.category, icon: th.icon, stat: th.stat, statLabel: th.statLabel }, img); post.imageAlt = th.stat ? `غلاف تحريري: ${th.stat} ${th.statLabel || ''}`.trim() : `غلاف تحريري لقسم ${cfg.categories.find((c) => c.slug === post.category)?.label ?? ''}`; }
+  catch (e) { console.warn('Chromium thumbnail unavailable, using pattern cover:', e.message); await generateCover(post.category, img); }
+}
 post.imagePath = `../../assets/posts/${imgName}.jpg`;
 post.tags = (post.tags || []).slice(0, 5);
 writeFileSync(new URL(`${slug}.md`, postsDir), toMarkdown(post, { base: cfg.base }));

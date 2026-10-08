@@ -102,3 +102,46 @@ export async function fetchPhoto(query, file) {
     return null;
   }
 }
+
+const LIC = { by: 'CC BY', 'by-sa': 'CC BY-SA', cc0: 'CC0', pdm: 'Public Domain' };
+
+/** Free, key-less: CC-licensed photos from Openverse (Flickr, Wikimedia, museums...). Returns credit info or null. */
+export async function fetchOpenverse(query, file) {
+  if (!query) return null;
+  try {
+    const u = new URL('https://api.openverse.org/v1/images/');
+    Object.entries({ q: query, license: 'cc0,pdm,by,by-sa', extension: 'jpg', size: 'large', aspect_ratio: 'wide', page_size: 12 }).forEach(([k, v]) => u.searchParams.set(k, v));
+    const res = await getWithRetry(u);
+    if (!res.ok) return null;
+    const { results = [] } = await res.json();
+    const good = results.filter((r) => r.width >= 1600 && r.width / r.height >= 1.4 && r.width / r.height <= 2.1);
+    for (const r of good.slice(0, 3)) {
+      try {
+        const img = await fetch(r.url, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(40000) });
+        if (!img.ok) continue;
+        await sharp(Buffer.from(await img.arrayBuffer())).resize(W, H, { fit: 'cover', position: 'centre' }).jpeg({ quality: 82, mozjpeg: true }).toFile(file);
+        const lic = `${LIC[r.license] ?? r.license}${r.license_version && r.license !== 'cc0' && r.license !== 'pdm' ? ' ' + r.license_version : ''}`;
+        return { name: (r.creator || r.source || 'Openverse').slice(0, 80), url: r.foreign_landing_url || r.url, source: `Openverse، ${lic}` };
+      } catch { /* try the next result */ }
+    }
+    return null;
+  } catch (e) {
+    console.warn('Openverse failed:', e.message);
+    return null;
+  }
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Try every query on every free source (Pexels if keyed, Openverse, Commons); first usable photo wins. */
+export async function findPhoto(queries, file) {
+  const list = (queries || []).filter(Boolean);
+  for (const [qi, q] of list.entries()) {
+    for (const fn of [fetchPhoto, fetchOpenverse, fetchCommons]) {
+      const credit = await fn(q, file);
+      if (credit) { console.log(`photo: "${q}" via ${fn.name}`); return { ...credit, _i: qi }; }
+      await sleep(1500); // be polite: Wikimedia and Openverse rate-limit bursts
+    }
+  }
+  return null;
+}

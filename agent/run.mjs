@@ -3,7 +3,8 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { generate, parseJson } from './llm.mjs';
 import { validate, slugify } from './quality.mjs';
-import { generateCover, fetchPhoto, fetchCommons } from './images.mjs';
+import { generateCover, findPhoto } from './images.mjs';
+import { makeThumb } from './thumb.mjs';
 import { toMarkdown } from './post.mjs';
 import { gatherNews } from './feeds.mjs';
 
@@ -67,9 +68,10 @@ async function writePost(story, notes, posts, feedback = '') {
       `- Attribute every claim to its source by name. Say clearly what is unconfirmed. End with a one-line note of the date of the latest information.\n` +
       `- Title: specific, informative, 45-62 chars (Google truncates longer titles), key terms FIRST, no clickbait, no all-caps tricks. Description: 110-170 chars, accurate summary.\n` +
       `- slug: 3-8 ARABIC words joined by hyphens, taken from the title's key terms (no diacritics, no punctuation, no stop-word padding), e.g. "حوادث-السير-بالمدن-33-قتيلا-أسبوع". imageName: 3-6 lowercase English words joined by hyphens (the image file name). tags: up to 5 short Arabic tags.\n` +
-      `- imageQuery: 2-4 English words naming a PLACE, building or object (not people) that has a good photo on Wikimedia Commons, e.g. "Parliament of Morocco Rabat", "Casablanca Hassan II Mosque", "Tangier port", "Mohammed V stadium"; never a person's name. imageAlt: Arabic one-sentence description of that illustrative image.\n` +
+      `- imageQueries: 3 English search phrases, from specific to general, each naming a PLACE, building, landscape or object (never people, teams or events), e.g. ["Parliament of Morocco Rabat","Rabat Morocco","government building"]; the first photo that exists is used. imageAlt: Arabic literal description of what such a photo shows.\n` +
+      `- thumb: for the designed fallback cover when no photo is found: {"icon": one of scale|landmark|football|fuel|car|globe|climate|chart|flask|bolt|shield|heart|mic|chip|book, "stat": the single most striking figure of the story (e.g. "33", "16,20", "98%"), "statLabel": 3-8 Arabic words saying what it counts}.`
       `- 2-4 FAQ items with 1-3 sentence answers drawn only from the notes.\n${feedback ? `\nFix these problems from the previous attempt:\n${feedback}\n` : ''}\n` +
-      `Return JSON: {"title":"","description":"","slug":"","imageName":"","category":"","tags":[""],"imageQuery":"","imageAlt":"","body":"markdown","faq":[{"q":"","a":""}]}`,
+      `Return JSON: {"title":"","description":"","slug":"","imageName":"","category":"","tags":[""],"imageQueries":[""],"imageAlt":"","thumb":{"icon":"","stat":"","statLabel":""},"body":"markdown","faq":[{"q":"","a":""}]}`,
   });
   return parseJson(text);
 }
@@ -109,13 +111,17 @@ async function main() {
 
     mkdirSync(assetsDir, { recursive: true });
     const imgFile = new URL(`${post.imageName || 'post-' + Date.now().toString(36)}.jpg`, assetsDir);
-    post.imageCredit = (await fetchPhoto(post.imageQuery, imgFile.pathname)) || (await fetchCommons(post.imageQuery, imgFile.pathname));
-    if (!post.imageCredit) await generateCover(post.category, imgFile.pathname);
+    post.imageCredit = await findPhoto(post.imageQueries || [post.imageQuery], imgFile.pathname);
+    if (!post.imageCredit) {
+      const th = post.thumb || {};
+      try { await makeThumb({ category: post.category, icon: th.icon, stat: th.stat, statLabel: th.statLabel }, imgFile.pathname); post.imageAlt = th.stat ? `غلاف تحريري: ${th.stat} ${th.statLabel || ''}`.trim() : `غلاف تحريري لقسم ${cfg.categories.find((c) => c.slug === post.category)?.label ?? ''}`; }
+      catch (e) { console.warn('Chromium unavailable, pattern cover:', e.message); await generateCover(post.category, imgFile.pathname); post.imageAlt = 'غلاف تجريدي بنقوش مغربية'; }
+    }
     post.imagePath = `../../assets/posts/${imgFile.pathname.split('/').pop()}`;
     post.imageCredit ||= undefined;
 
     writeFileSync(new URL(`${slug}.md`, postsDir), toMarkdown(post, { base: cfg.base }));
-    console.log(`Saved src/content/posts/${slug}.md (${post.imageCredit ? 'photo' : 'generated cover'})`);
+    console.log(`Saved src/content/posts/${slug}.md (${post.imageCredit ? 'photo' : 'editorial thumbnail'})`);
     return;
   }
   throw new Error('No story passed the quality checks; nothing published today.');
