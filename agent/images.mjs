@@ -44,6 +44,8 @@ export async function generateCover(category, file) {
 
 const UA = 'NabdAlMaghribBot/1.0 (news site; contact via site)';
 const OK_LICENSE = /^(CC BY(-SA)? [\d.]+|CC0|Public domain|PD)/i;
+// Titles that betray people, events, artwork or documents: a photo of those never illustrates a news place/object honestly.
+const BAD_TITLE = /(press conference|speaks?|speech|meeting|meets|summit|secretary|minister|president|prime|king |queen|portrait|interview|ceremony|visit|rally|protest|mural|painting|azulejo|tile|statue|poster|logo|flag of|coat of arms|diagram|conquest|conquista|battle|war |soldier|candidate|election)/i;
 const stripHtml = (h = '') => h.replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 
 /** GET with a few retries: Wikimedia rate-limits (429) bursts of requests. */
@@ -66,7 +68,7 @@ export async function fetchCommons(query, file) {
     const res = await getWithRetry(u);
     if (!res.ok) return null;
     const pages = Object.values((await res.json()).query?.pages || {}).sort((a, b) => a.index - b.index);
-    const pick = pages.map((p) => ({ p, ii: p.imageinfo?.[0] })).find(({ ii }) => {
+    const pick = pages.filter((p) => !BAD_TITLE.test(p.title || '')).map((p) => ({ p, ii: p.imageinfo?.[0] })).find(({ ii }) => {
       const m = ii?.extmetadata || {};
       return ii && ii.mime === 'image/jpeg' && ii.width >= 1600 && ii.width / ii.height >= 1.4 && ii.width / ii.height <= 2.1 && OK_LICENSE.test(m.LicenseShortName?.value || '') && !/NonCommercial|NoDerivs/i.test(m.LicenseShortName?.value || '');
     });
@@ -114,7 +116,7 @@ export async function fetchOpenverse(query, file) {
     const res = await getWithRetry(u);
     if (!res.ok) return null;
     const { results = [] } = await res.json();
-    const good = results.filter((r) => r.width >= 1600 && r.width / r.height >= 1.4 && r.width / r.height <= 2.1);
+    const good = results.filter((r) => !BAD_TITLE.test(r.title || '') && r.width >= 1600 && r.width / r.height >= 1.4 && r.width / r.height <= 2.1);
     for (const r of good.slice(0, 3)) {
       try {
         const img = await fetch(r.url, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(40000) });
