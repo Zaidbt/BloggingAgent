@@ -7,7 +7,11 @@
     "build": "astro build",
     "preview": "astro preview",
     "agent": "node agent/run.mjs",
-    "agent:dry": "node agent/run.mjs --dry-run"
+    "agent:dry": "node agent/run.mjs --dry-run",
+    "news": "NODE_USE_ENV_PROXY=1 node --disable-warning=UNDICI-EHPA agent/prepare.mjs",
+    "post": "NODE_USE_ENV_PROXY=1 node --disable-warning=UNDICI-EHPA agent/add-post.mjs",
+    "contact": "node agent/contact.mjs",
+    "social": "node agent/social.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",

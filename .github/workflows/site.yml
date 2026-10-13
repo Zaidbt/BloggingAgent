@@ -1,12 +1,10 @@
 name: Publish daily post and deploy
 
 on:
-  schedule:
-    - cron: "17 6 * * *"      # every day 06:17 UTC
   workflow_dispatch:
     inputs:
-      skip_agent:
-        description: "Only rebuild/deploy, don't write a post"
+      run_agent:
+        description: "Also run the (optional, API-based) writing agent before building"
         type: boolean
         default: false
   push:
@@ -31,7 +29,7 @@ jobs:
       - run: npm ci
 
       - name: Write today's post
-        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.skip_agent)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_agent
         env:
           LLM_PROVIDER: ${{ vars.LLM_PROVIDER || 'gemini' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

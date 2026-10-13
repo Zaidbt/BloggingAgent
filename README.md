@@ -25,3 +25,6 @@ Chain (first hit wins, `agent/images.mjs`): Pexels (if `PEXELS_API_KEY`) -> Open
 Arabic URLs (`/أخبار/<arabic-slug>/`, `/قسم/…`, `/وسم/…`), NewsArticle + Breadcrumb + FAQ + NewsMediaOrganization JSON-LD, canonical + hreflang, Open Graph/Twitter images (1200×630), sitemap with `<lastmod>`, Google News sitemap (`/news-sitemap.xml`), IndexNow ping after each deploy (Bing/Yandex), RSS, `llms.txt`, self-hosted fonts (no third-party request), responsive WebP images, trust pages (about, editorial policy & corrections, contact, privacy), thin tag pages are `noindex` until they hold 3 articles.
 
 To get discovered faster: verify the site in Google Search Console and submit `sitemap-index.xml` + `news-sitemap.xml`, add it to Bing Webmaster Tools, and use a custom domain (robots.txt and root-level files only work on a domain root).
+
+## Daily routine
+A scheduled Claude Code routine publishes 3 articles every morning following `agent/ROUTINE.md` (tools: `npm run news`, `npm run post`, `npm run contact`). The GitHub Actions workflow only builds and deploys on every push to `main`; the API-based agent (`npm run agent`) is optional and manual.

@@ -25,7 +25,7 @@ export async function gatherNews(feeds, { hours = 48, perFeed = 12 } = {}) {
   const results = await Promise.all(feeds.map(async (url) => {
     const outlet = new URL(url).hostname.replace(/^(www|ar)\./, '');
     try {
-      const res = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; NabdAlMaghribBot/1.0)', accept: 'application/rss+xml, application/xml, text/xml' }, signal: AbortSignal.timeout(20000) });
+      const res = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36', accept: 'application/rss+xml, application/xml, text/xml' }, signal: AbortSignal.timeout(20000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const items = parseFeed(await res.text())
         .filter((i) => isNaN(i.date) || +i.date >= since)

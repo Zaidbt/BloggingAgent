@@ -1,6 +1,6 @@
 // Editorial thumbnail: the guaranteed last step of the image chain. Category colours + a topic icon + an optional
 // headline figure ("33 قتيلاً", "16,20 درهماً"). Rendered with Chromium so Arabic text is shaped correctly.
-import { readFileSync, readdirSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
 export const PALETTES = {
@@ -40,6 +40,15 @@ const fontCss = readdirSync(fontsDir).filter((f) => /cairo|plex-sans-arabic-(400
   return `@font-face{font-family:'${cairo ? 'Cairo' : 'IBM Plex Sans Arabic'}';font-weight:${w};src:url(file://${fontsDir}${f}) format('woff2');unicode-range:${range}}`;
 }).join('');
 
+async function loadPlaywright() {
+  for (const m of [process.env.PLAYWRIGHT_MODULE, 'playwright', '/opt/node-tools/node_modules/playwright/index.mjs']) {
+    if (!m) continue;
+    try { return await import(m); } catch { /* try the next location */ }
+  }
+  throw new Error('Playwright not found (set PLAYWRIGHT_MODULE)');
+}
+const chromiumPath = () => process.env.CHROMIUM_PATH || (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
+
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 export function thumbHtml({ category = 'world', icon, stat, statLabel }) {
@@ -65,9 +74,9 @@ body{font-family:'Cairo',Tahoma,sans-serif;color:#fff;background:linear-gradient
 
 /** Render a thumbnail JPG (1600x900). `browser` is optional: pass one to reuse it across calls. */
 export async function makeThumb(opts, file, browser) {
-  const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+  const { chromium } = await loadPlaywright();
   const own = !browser;
-  browser ||= await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+  browser ||= await chromium.launch({ executablePath: chromiumPath() });
   const tmp = file + '.html';
   writeFileSync(tmp, thumbHtml(opts));
   const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });

@@ -3,7 +3,7 @@
 //   node agent/social.mjs                -> every article
 //   node agent/social.mjs <part-of-slug> -> articles whose file name contains it
 // Needs Playwright with Chromium (set PLAYWRIGHT_MODULE to its path if it is not in node_modules).
-import { readFileSync, readdirSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
 const root = new URL('../', import.meta.url);
@@ -14,9 +14,18 @@ const fontsDir = fileURLToPath(new URL('public/fonts/', root));
 const siteHost = new URL(cfg.url).host + (cfg.base || '');
 const only = process.argv[2];
 
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { chromium } = await loadPlaywright();
 
 const J = (raw, key) => { const m = raw.match(new RegExp(`^${key}:\\s*(.+)$`, 'm')); try { return m ? JSON.parse(m[1]) : undefined; } catch { return m?.[1]; } };
+async function loadPlaywright() {
+  for (const m of [process.env.PLAYWRIGHT_MODULE, 'playwright', '/opt/node-tools/node_modules/playwright/index.mjs']) {
+    if (!m) continue;
+    try { return await import(m); } catch { /* try the next location */ }
+  }
+  throw new Error('Playwright not found (set PLAYWRIGHT_MODULE)');
+}
+const chromiumPath = () => process.env.CHROMIUM_PATH || (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
+
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function parsePost(file) {
@@ -103,7 +112,7 @@ function caption(p) {
 
 mkdirSync(out, { recursive: true });
 const files = readdirSync(postsDir).filter((f) => f.endsWith('.md') && (!only || f.includes(only)));
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+const browser = await chromium.launch({ executablePath: chromiumPath() });
 const tmp = fileURLToPath(new URL('social-out/_tmp.html', root));
 for (const f of files) {
   const p = parsePost(f);
