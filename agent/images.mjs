@@ -42,7 +42,7 @@ export async function generateCover(category, file) {
   return null;
 }
 
-const UA = 'NabdAlMaghribBot/1.0 (news site; contact via site)';
+const UA = 'AlBarrahBot/1.0 (news site; contact via site)';
 const OK_LICENSE = /^(CC BY(-SA)? [\d.]+|CC0|Public domain|PD)/i;
 // Titles that betray people, events, artwork or documents: a photo of those never illustrates a news place/object honestly.
 const BAD_TITLE = /(press conference|speaks?|speech|meeting|meets|summit|secretary|minister|president|prime|king |queen|portrait|interview|ceremony|visit|rally|protest|mural|painting|azulejo|tile|statue|poster|logo|flag of|coat of arms|diagram|conquest|conquista|battle|war |soldier|candidate|election)/i;
