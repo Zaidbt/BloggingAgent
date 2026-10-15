@@ -1,4 +1,4 @@
-import cfg from '../../site.config.json';
+import cfg from '../../site-config.mjs';
 
 export const site = cfg;
 export const R = cfg.routes;

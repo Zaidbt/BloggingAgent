@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import { readFileSync, readdirSync } from 'node:fs';
 
-const cfg = JSON.parse(readFileSync(new URL('./site.config.json', import.meta.url), 'utf8'));
+import cfg from './site-config.mjs';
 
 // url -> last modification date, read from the posts' front matter, so the sitemap carries <lastmod>
 const dir = new URL('./src/content/posts/', import.meta.url);

@@ -3,7 +3,7 @@
 // Google does not use IndexNow: submit the sitemap in Search Console instead.
 import { readFileSync } from 'node:fs';
 
-const cfg = JSON.parse(readFileSync(new URL('../site.config.json', import.meta.url), 'utf8'));
+import cfg from '../site-config.mjs';
 const KEY = '27d813afd0476bf20fa736935b59ee3c';
 const base = (cfg.url + (cfg.base || '')).replace(/\/$/, '');
 
