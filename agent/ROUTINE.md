@@ -1,4 +1,4 @@
-# Daily routine — publish 3 news articles for «البراح»
+# Daily routine — publish 3 news articles for «نبض المغرب»
 
 You run as a fresh Claude Code session, once a day. Goal: publish **exactly 3 new Arabic news articles** (fewer only if fewer than 3 valid stories exist), each with a truthful image, then push to `main` (GitHub Actions rebuilds and deploys the site). Work in `/home/user/BloggingAgent` (if absent, clone/attach `zaidbt/bloggingagent`). **Be lean**: no screenshots, never print whole feeds, view images only through the contact sheet.
 

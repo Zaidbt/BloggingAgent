@@ -9,7 +9,7 @@ const base = (cfg.url + (cfg.base || '')).replace(/\/$/, '');
 
 try {
   // submit what the news sitemap lists (articles of the last 2 days) plus the home page
-  const xml = await (await fetch(`${base}/news-sitemap.xml`, { headers: { 'user-agent': 'AlBarrahBot/1.0' } })).text();
+  const xml = await (await fetch(`${base}/news-sitemap.xml`, { headers: { 'user-agent': 'NabdAlMaghribBot/1.0' } })).text();
   const urls = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1].replace(/&amp;/g, '&'));
   const urlList = [...new Set([base + '/', ...urls])];
   const res = await fetch('https://api.indexnow.org/indexnow', {
