@@ -6,12 +6,12 @@ import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 const UA = 'NabdAlMaghrib/1.0 (https://github.com/Zaidbt/BloggingAgent; bot) node-fetch';
 // Wikimedia throttles direct upload.wikimedia.org hits; Special:FilePath with a width is served from a friendlier bucket.
 const wm = (u, w) => { const m = /upload\.wikimedia\.org\/wikipedia\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/]+)/.exec(u); return m ? `https://commons.wikimedia.org/wiki/Special:FilePath/${m[1]}?width=${w}` : u; };
-async function dl(u, w, tries = 3) {
+async function dl(u, w, tries = 6) {
   for (let i = 0; i < tries; i++) {
     const r = await fetch(wm(u, w), { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(60000) });
     if (r.ok) return Buffer.from(await r.arrayBuffer());
     if (r.status !== 429) break;
-    await new Promise((ok) => setTimeout(ok, 3000 * (i + 1)));
+    await new Promise((ok) => setTimeout(ok, 6000 * (i + 1)));
   }
   throw new Error('download failed');
 }
@@ -22,7 +22,7 @@ const [cmd, ...args] = process.argv.slice(2);
 
 async function ov(q) {
   const u = new URL('https://api.openverse.org/v1/images/');
-  Object.entries({ q, license: 'cc0,pdm,by,by-sa', extension: 'jpg', size: 'large', page_size: 15 }).forEach(([k, v]) => u.searchParams.set(k, v));
+  Object.entries({ q, license: 'cc0,pdm,by,by-sa', extension: 'jpg', size: 'large', page_size: 15, ...(process.env.SRC ? { source: process.env.SRC } : {}) }).forEach(([k, v]) => u.searchParams.set(k, v));
   const r = await fetch(u, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(30000) });
   if (!r.ok) return [];
   return (await r.json()).results.filter((x) => !BAD.test(x.title || '') && x.width >= 1400 && x.width / x.height >= 1.25)
