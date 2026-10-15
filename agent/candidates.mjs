@@ -37,11 +37,26 @@ async function pexels(q) {
   return (await r.json()).photos.map((x) => ({ title: x.alt || `Pexels ${x.id}`, url: x.src.large2x, thumb: x.src.medium, land: x.url, by: x.photographer, lic: 'Pexels License', src: 'pexels', pexels: true }));
 }
 
+async function pixabay(q) {
+  const key = process.env.PIXABAY_API_KEY;
+  if (!key) return [];
+  const r = await fetch(`https://pixabay.com/api/?key=${key}&image_type=photo&orientation=horizontal&min_width=1200&safesearch=true&per_page=15&q=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(30000) });
+  if (!r.ok) return [];
+  return (await r.json()).hits.map((x) => ({ title: x.tags, url: x.largeImageURL, thumb: x.webformatURL, land: x.pageURL, by: x.user, lic: 'Pixabay License', src: 'pixabay', stock: 'Pixabay' }));
+}
+async function unsplash(q) {
+  const key = process.env.UNSPLASH_ACCESS_KEY;
+  if (!key) return [];
+  const r = await fetch(`https://api.unsplash.com/search/photos?per_page=15&orientation=landscape&query=${encodeURIComponent(q)}`, { headers: { Authorization: `Client-ID ${key}` }, signal: AbortSignal.timeout(30000) });
+  if (!r.ok) return [];
+  return (await r.json()).results.map((x) => ({ title: x.alt_description || x.description || `Unsplash ${x.id}`, url: `${x.urls.raw}&w=1800&q=80&fm=jpg`, thumb: x.urls.small, land: x.links.html, by: x.user.name, lic: 'Unsplash License', src: 'unsplash', stock: 'Unsplash' }));
+}
+
 if (cmd === 'search') {
   const seen = new Set(); let all = [];
-  for (const q of args) for (const c of [...await pexels(q), ...await ov(q)]) if (!seen.has(c.url)) { seen.add(c.url); all.push(c); }
+  for (const q of args) for (const c of [...await pexels(q), ...await unsplash(q), ...await pixabay(q), ...await ov(q)]) if (!seen.has(c.url)) { seen.add(c.url); all.push(c); }
   // Pexels first, then Flickr/others; Wikimedia last (it throttles this machine)
-  all.sort((a, b) => (b.pexels ? 2 : b.src !== 'wikimedia' ? 1 : 0) - (a.pexels ? 2 : a.src !== 'wikimedia' ? 1 : 0));
+  all.sort((a, b) => ((b.pexels || b.stock) ? 2 : b.src !== 'wikimedia' ? 1 : 0) - ((a.pexels || a.stock) ? 2 : a.src !== 'wikimedia' ? 1 : 0));
   all = all.slice(0, 20);
   const tiles = [];
   for (const [i, c] of all.entries()) {
@@ -61,5 +76,5 @@ if (cmd === 'search') {
   const c = JSON.parse(readFileSync('.cache/cand.json', 'utf8'))[+args[0]];
   const b = await dl(c.url, 1800);
   await sharp(b).resize(1600, 900, { fit: 'cover', position: 'centre' }).jpeg({ quality: 82, mozjpeg: true }).toFile(args[1]);
-  console.log(JSON.stringify({ name: String(c.by).slice(0, 80), url: c.land, source: c.pexels ? 'Pexels' : `Openverse، ${c.lic}` }));
+  console.log(JSON.stringify({ name: String(c.by).slice(0, 80), url: c.land, source: c.pexels ? 'Pexels' : c.stock ? c.stock : `Openverse، ${c.lic}` }));
 }
