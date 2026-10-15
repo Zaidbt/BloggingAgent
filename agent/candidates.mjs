@@ -29,9 +29,19 @@ async function ov(q) {
     .map((x) => ({ title: x.title, url: x.url, thumb: x.thumbnail, land: x.foreign_landing_url || x.url, by: x.creator || x.source, lic: `${LIC[x.license] || x.license}${x.license_version && x.license !== 'cc0' && x.license !== 'pdm' ? ' ' + x.license_version : ''}`, src: x.source }));
 }
 
+async function pexels(q) {
+  const key = process.env.PEXELS_API_KEY;
+  if (!key) return [];
+  const r = await fetch(`https://api.pexels.com/v1/search?per_page=15&orientation=landscape&query=${encodeURIComponent(q)}`, { headers: { Authorization: key }, signal: AbortSignal.timeout(30000) });
+  if (!r.ok) return [];
+  return (await r.json()).photos.map((x) => ({ title: x.alt || `Pexels ${x.id}`, url: x.src.large2x, thumb: x.src.medium, land: x.url, by: x.photographer, lic: 'Pexels License', src: 'pexels', pexels: true }));
+}
+
 if (cmd === 'search') {
   const seen = new Set(); let all = [];
-  for (const q of args) for (const c of await ov(q)) if (!seen.has(c.url)) { seen.add(c.url); all.push(c); }
+  for (const q of args) for (const c of [...await pexels(q), ...await ov(q)]) if (!seen.has(c.url)) { seen.add(c.url); all.push(c); }
+  // Pexels first, then Flickr/others; Wikimedia last (it throttles this machine)
+  all.sort((a, b) => (b.pexels ? 2 : b.src !== 'wikimedia' ? 1 : 0) - (a.pexels ? 2 : a.src !== 'wikimedia' ? 1 : 0));
   all = all.slice(0, 20);
   const tiles = [];
   for (const [i, c] of all.entries()) {
@@ -51,5 +61,5 @@ if (cmd === 'search') {
   const c = JSON.parse(readFileSync('.cache/cand.json', 'utf8'))[+args[0]];
   const b = await dl(c.url, 1800);
   await sharp(b).resize(1600, 900, { fit: 'cover', position: 'centre' }).jpeg({ quality: 82, mozjpeg: true }).toFile(args[1]);
-  console.log(JSON.stringify({ name: String(c.by).slice(0, 80), url: c.land, source: `Openverse، ${c.lic}` }));
+  console.log(JSON.stringify({ name: String(c.by).slice(0, 80), url: c.land, source: c.pexels ? 'Pexels' : `Openverse، ${c.lic}` }));
 }
