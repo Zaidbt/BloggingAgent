@@ -1,4 +1,4 @@
-# نبض المغرب — automated Arabic news blog
+# الخبر 212 — automated Arabic news blog
 
 An Arabic (RTL) Moroccan news site built with Astro, plus a daily AI agent. Free to run: GitHub Actions + GitHub Pages + Gemini free tier.
 

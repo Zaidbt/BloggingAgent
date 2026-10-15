@@ -3,7 +3,7 @@
 //   node agent/candidates.mjs pick 3 src/assets/posts/name.jpg                -> saves candidate 3, prints credit JSON
 import sharp from 'sharp';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
-const UA = 'NabdAlMaghrib/1.0 (https://github.com/Zaidbt/BloggingAgent; bot) node-fetch';
+const UA = 'Alkhabar212/1.0 (https://github.com/Zaidbt/BloggingAgent; bot) node-fetch';
 // Wikimedia throttles direct upload.wikimedia.org hits; Special:FilePath with a width is served from a friendlier bucket.
 const wm = (u, w) => { const m = /upload\.wikimedia\.org\/wikipedia\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/]+)/.exec(u); return m ? `https://commons.wikimedia.org/wiki/Special:FilePath/${m[1]}?width=${w}` : u; };
 async function dl(u, w, tries = 6) {
