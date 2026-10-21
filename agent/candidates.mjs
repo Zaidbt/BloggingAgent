@@ -2,7 +2,7 @@
 //   node agent/candidates.mjs search "Rabat parliament" "Morocco parliament"  -> .cache/cand.png + .cache/cand.json
 //   node agent/candidates.mjs pick 3 src/assets/posts/name.jpg                -> saves candidate 3, prints credit JSON
 import sharp from 'sharp';
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 const UA = 'Alkhabar212/1.0 (https://github.com/Zaidbt/BloggingAgent; bot) node-fetch';
 // Wikimedia throttles direct upload.wikimedia.org hits; Special:FilePath with a width is served from a friendlier bucket.
 const wm = (u, w) => { const m = /upload\.wikimedia\.org\/wikipedia\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/]+)/.exec(u); return m ? `https://commons.wikimedia.org/wiki/Special:FilePath/${m[1]}?width=${w}` : u; };
@@ -52,9 +52,13 @@ async function unsplash(q) {
   return (await r.json()).results.map((x) => ({ title: x.alt_description || x.description || `Unsplash ${x.id}`, url: `${x.urls.raw}&w=1800&q=80&fm=jpg`, thumb: x.urls.small, land: x.links.html, by: x.user.name, lic: 'Unsplash License', src: 'unsplash', stock: 'Unsplash' }));
 }
 
+// One slow or failing source must not kill the whole search
+async function safe(fn, q) { try { return await fn(q); } catch (e) { console.warn(`${fn.name} failed: ${e.message}`); return []; } }
+
 if (cmd === 'search') {
+  rmSync('.cache/cand.png', { force: true });
   const seen = new Set(); let all = [];
-  for (const q of args) for (const c of [...await pexels(q), ...await unsplash(q), ...await pixabay(q), ...await ov(q)]) if (!seen.has(c.url)) { seen.add(c.url); all.push(c); }
+  for (const q of args) for (const c of [...await safe(pexels, q), ...await safe(unsplash, q), ...await safe(pixabay, q), ...await safe(ov, q)]) if (!seen.has(c.url)) { seen.add(c.url); all.push(c); }
   // Pexels first, then Flickr/others; Wikimedia last (it throttles this machine)
   all.sort((a, b) => ((b.pexels || b.stock) ? 2 : b.src !== 'wikimedia' ? 1 : 0) - ((a.pexels || a.stock) ? 2 : a.src !== 'wikimedia' ? 1 : 0));
   all = all.slice(0, 20);
