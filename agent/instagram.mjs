@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Instagram carousels for «الخبر 212»: 5 slides (1080x1350) + caption + alt text per story.
+// Instagram carousels for «ماروك نيوز»: 5 slides (1080x1350) + caption + alt text per story.
 //   node agent/instagram.mjs            -> every file in social/content/*.json
 //   node agent/instagram.mjs budget     -> only matching files
 // Output: social-out/<name>/slide-1..5.png, caption.txt  (social-out is git-ignored)
@@ -10,7 +10,7 @@ const root = new URL('../', import.meta.url);
 const cfg = JSON.parse(readFileSync(new URL('site.config.json', root), 'utf8'));
 const fontsDir = fileURLToPath(new URL('public/fonts/', root));
 const only = process.argv[2];
-const HANDLE = '@alkhabar212';
+const HANDLE = '@marocnews.ma';
 
 const loadPw = async () => { for (const m of [process.env.PLAYWRIGHT_MODULE, 'playwright', '/opt/node-tools/node_modules/playwright/index.mjs']) { if (m) try { return await import(m); } catch {} } throw new Error('Playwright not found'); };
 const { chromium } = await loadPw();
@@ -43,7 +43,7 @@ em{font-style:normal;color:${RED}}
 .label{display:inline-flex;align-items:center;gap:14px;font-weight:800;font-size:34px;color:${RED};letter-spacing:.5px}
 .label::before{content:"";width:46px;height:6px;background:${RED};border-radius:3px}`;
 
-const chrome = (n, theme, hint = true) => `<div class="top ${theme === 'paper' ? 't-paper' : ''}"><div class="brand"><div class="mark">212</div><span>الخبر <span style="color:${RED}">212</span></span></div><div class="count">0${n} / 05</div></div>
+const chrome = (n, theme, hint = true) => `<div class="top ${theme === 'paper' ? 't-paper' : ''}"><div class="brand"><div class="mark">MN</div><span>ماروك <span style="color:${RED}">نيوز</span></span></div><div class="count">0${n} / 05</div></div>
 <div class="bot" style="color:${theme === 'paper' ? INK : '#fff'}"><div class="prog">${[1, 2, 3, 4, 5].map((i) => `<i class="${i === n ? 'on' : ''}"></i>`).join('')}</div><div class="meta"><span>${hint ? 'اسحب لتكمل ‹' : 'شكراً لوقتك'}</span><span class="h">${hint ? HANDLE : ''}</span></div></div>`;
 
 const fmtDate = (iso) => new Date(iso).toLocaleDateString('ar-MA-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Africa/Casablanca' });

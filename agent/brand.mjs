@@ -3,7 +3,7 @@ import { writeFileSync, readdirSync, rmSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 
-export const MARK = `<text x="32" y="43" text-anchor="middle" font-family="Cairo,Arial Black,Arial,sans-serif" font-weight="800" font-size="30" fill="#fff" letter-spacing="-1">212</text><rect x="14" y="48" width="36" height="4" rx="2" fill="#7dd3a0"/>`;
+export const MARK = `<text x="32" y="43" text-anchor="middle" font-family="Cairo,Arial Black,Arial,sans-serif" font-weight="800" font-size="27" fill="#fff" letter-spacing="-1">MN</text><rect x="14" y="48" width="36" height="4" rx="2" fill="#7dd3a0"/>`;
 const svg = (size = 64) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}"><rect width="64" height="64" rx="14" fill="#c1272d"/>${MARK}</svg>`;
 const pub = (f) => fileURLToPath(new URL(`../public/${f}`, import.meta.url));
 const name = JSON.parse((await import('node:fs')).readFileSync(fileURLToPath(new URL('../site.config.json', import.meta.url)), 'utf8'));
