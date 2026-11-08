@@ -78,6 +78,7 @@ const preload = fontFiles.filter((f) => f.subset === 'arabic' && (f.family === '
     {type === 'article' && <meta property="article:author" content={abs(R.about)} />}
     {tags.map((t) => <meta property="article:tag" content={t} />)}
     <script type="application/ld+json" set:html={JSON.stringify(graph)} />
+    {site.goatcounter && <script is:inline data-goatcounter={`https://${site.goatcounter}.goatcounter.com/count`} async src="https://gc.zgo.at/count.js"></script>}
   </head>
   <body>
     <a class="skip" href="#main">تخطَّ إلى المحتوى</a>
